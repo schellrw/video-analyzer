@@ -1,0 +1,49 @@
+graph TB
+    %% User Layer
+    U[👨‍💼 Civil Rights Attorney] --> FE[🌐 React Frontend<br/>Netlify CDN]
+    
+    %% Frontend Layer
+    FE --> API[🔗 Flask API<br/>Digital Ocean]
+    FE --> AUTH[🔐 Supabase Auth]
+    FE --> CDN[📁 DO Spaces CDN<br/>Video Files]
+    
+    %% Backend Services
+    API --> DB[(🗄️ Supabase<br/>PostgreSQL)]
+    API --> REDIS[(📮 Redis<br/>Queue & Cache)]
+    API --> STORAGE[☁️ DO Spaces<br/>File Storage]
+    
+    %% AI Processing Pipeline
+    API --> QUEUE[⚙️ Celery Workers<br/>Video Processing]
+    QUEUE --> FFMPEG[🎬 FFmpeg<br/>Video Processing]
+    QUEUE --> AI_PIPELINE[🤖 AI Analysis Pipeline]
+    
+    %% AI Models
+    AI_PIPELINE --> LLAVA[👁️ LLaVA-HF<br/>Visual Analysis]
+    AI_PIPELINE --> WHISPER[🎙️ Whisper<br/>Audio Transcription]
+    AI_PIPELINE --> NLP[📝 NLP Models<br/>Violation Detection]
+    
+    %% External GPU Compute
+    AI_PIPELINE --> GPU[🚀 RunPod/Vast.ai<br/>GPU Compute]
+    
+    %% Monitoring & Security
+    API --> MONITOR[📊 Monitoring<br/>Sentry/DataDog]
+    API --> LOGS[📋 Centralized Logs]
+    
+    %% Data Flow
+    QUEUE --> DB
+    AI_PIPELINE --> DB
+    
+    %% Styling
+    classDef user fill:#e1f5fe
+    classDef frontend fill:#f3e5f5
+    classDef backend fill:#e8f5e8
+    classDef database fill:#fff3e0
+    classDef ai fill:#fce4ec
+    classDef external fill:#f1f8e9
+    
+    class U user
+    class FE,CDN frontend
+    class API,QUEUE,FFMPEG backend
+    class DB,REDIS,STORAGE database
+    class AI_PIPELINE,LLAVA,WHISPER,NLP,GPU ai
+    class AUTH,MONITOR,LOGS external

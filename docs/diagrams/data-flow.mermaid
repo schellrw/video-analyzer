@@ -1,0 +1,74 @@
+sequenceDiagram
+    participant U as 👨‍💼 Attorney
+    participant FE as 🌐 Frontend
+    participant API as 🔗 Flask API
+    participant AUTH as 🔐 Supabase Auth
+    participant DB as 🗄️ Database
+    participant QUEUE as ⚙️ Celery Queue
+    participant AI as 🤖 AI Pipeline
+    participant STORAGE as ☁️ File Storage
+    
+    %% Authentication Flow
+    U->>FE: Login Request
+    FE->>AUTH: Authenticate User
+    AUTH-->>FE: JWT Token
+    FE-->>U: Login Success
+    
+    %% Case Creation
+    U->>FE: Create New Case
+    FE->>API: POST /api/v1/cases
+    API->>AUTH: Verify JWT
+    AUTH-->>API: User Verified
+    API->>DB: Create Case Record
+    DB-->>API: Case Created
+    API-->>FE: Case Response
+    FE-->>U: Case Dashboard
+    
+    %% Video Upload Flow
+    U->>FE: Upload Video Files
+    FE->>API: Request Upload URLs
+    API->>STORAGE: Generate Presigned URLs
+    STORAGE-->>API: Signed URLs
+    API-->>FE: Upload URLs
+    FE->>STORAGE: Direct Upload Video
+    STORAGE-->>FE: Upload Complete
+    
+    %% Analysis Initiation
+    FE->>API: POST /api/v1/videos/analyze
+    API->>DB: Create Video Record
+    API->>QUEUE: Queue Analysis Job
+    QUEUE->>AI: Start Processing
+    API-->>FE: Analysis Started
+    FE-->>U: Processing Status
+    
+    %% AI Processing Pipeline
+    AI->>STORAGE: Download Video Chunks
+    STORAGE-->>AI: Video Data
+    AI->>AI: FFmpeg Processing
+    AI->>AI: Frame Sampling
+    AI->>AI: LLaVA Visual Analysis
+    AI->>AI: Whisper Transcription
+    AI->>AI: Violation Detection
+    AI->>DB: Store Analysis Results
+    
+    %% Real-time Updates
+    loop Processing Updates
+        AI->>API: Progress Update
+        API->>FE: WebSocket Update
+        FE->>U: Show Progress
+    end
+    
+    %% Analysis Completion
+    AI->>DB: Final Results
+    AI->>API: Analysis Complete
+    API->>FE: WebSocket Notification
+    FE->>U: Analysis Ready
+    
+    %% Report Generation
+    U->>FE: Generate Report
+    FE->>API: GET /api/v1/analysis/report
+    API->>DB: Fetch Analysis Data
+    DB-->>API: Analysis Results
+    API->>API: Generate PDF Report
+    API-->>FE: Report Data
+    FE-->>U: Download Report

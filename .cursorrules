@@ -1,0 +1,134 @@
+# Video Evidence Analysis Platform - Cursor AI Rules
+
+## Project Context
+You are working on a Video Evidence Analysis Platform - a SaaS tool for civil rights attorneys to analyze video evidence (bodycam, security footage, mobile recordings) using AI to detect potential violations and generate legal reports.
+
+## Tech Stack
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
+- **Backend**: Flask + SQLAlchemy + Celery + Redis
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **AI/ML**: LLaVA-HF (visual), Whisper (audio), custom NLP models
+- **Storage**: Digital Ocean Spaces (S3-compatible)
+- **Deployment**: Netlify (frontend), Digital Ocean (backend)
+- **Auth**: Supabase Auth with JWT tokens
+
+## Code Quality Standards
+- Write clean, readable, well-documented code
+- Use TypeScript for all frontend code with strict mode
+- Follow PEP 8 for Python code with type hints
+- Implement proper error handling and logging
+- Write unit tests for critical functions
+- Use meaningful variable and function names
+
+## Architecture Principles
+- Separation of concerns between frontend/backend/AI
+- RESTful API design with consistent response formats
+- Async processing for long-running AI tasks
+- Secure file handling with presigned URLs
+- Scalable design patterns
+
+## Frontend Guidelines
+- Use functional components with hooks
+- Implement proper TypeScript interfaces
+- Use Zustand for state management
+- Follow atomic design principles for components
+- Implement responsive design with Tailwind
+- Use react-query for API calls and caching
+- Implement proper loading states and error boundaries
+
+## Backend Guidelines
+- Use Flask app factory pattern
+- Implement service layer for business logic
+- Use SQLAlchemy models with proper relationships
+- Implement proper authentication middleware
+- Use Celery for asynchronous tasks
+- Follow RESTful naming conventions
+- Implement proper validation and sanitization
+
+## Security Requirements
+- Never store sensitive data in localStorage
+- Implement proper JWT token handling
+- Use environment variables for secrets
+- Validate all inputs on both client and server
+- Implement rate limiting on API endpoints
+- Use HTTPS for all communications
+- Implement proper CORS policies
+
+## AI/ML Guidelines
+- Optimize for cost-effective processing
+- Implement confidence scoring for all detections
+- Use batch processing for efficiency
+- Implement proper error handling for model failures
+- Cache results to avoid reprocessing
+- Monitor GPU usage and costs
+
+## File Structure Expectations
+```
+video-evidence-analyzer/
+├── frontend/src/
+│   ├── components/
+│   ├── pages/
+│   ├── hooks/
+│   ├── services/
+│   ├── stores/
+│   └── types/
+├── backend/app/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── tasks/
+│   └── utils/
+├── ai-models/
+└── docs/
+```
+
+## Common Patterns
+- Use custom hooks for reusable logic
+- Implement proper loading and error states
+- Use service classes for complex business logic
+- Implement proper database transactions
+- Use dependency injection where appropriate
+- Follow the principle of least privilege
+
+## Performance Considerations
+- Implement lazy loading for large components
+- Use React.memo for expensive renders
+- Optimize database queries with proper indexing
+- Implement caching strategies
+- Use CDN for static assets
+- Monitor and optimize bundle sizes
+
+## Specific Domain Knowledge
+- Understanding of legal evidence requirements
+- Video processing and analysis concepts
+- Civil rights law basics (Section 1983 violations)
+- Audio/video synchronization techniques
+- Chain of custody for digital evidence
+
+## Error Handling
+- Always implement try-catch blocks for external calls
+- Provide meaningful error messages to users
+- Log errors with proper context for debugging
+- Implement graceful degradation for AI failures
+- Use proper HTTP status codes
+
+## Testing Strategy
+- Write unit tests for utility functions
+- Test API endpoints with proper mocking
+- Test React components with React Testing Library
+- Implement integration tests for critical flows
+- Test error scenarios and edge cases
+
+## Documentation
+- Comment complex algorithms and business logic
+- Maintain up-to-date API documentation
+- Document environment setup procedures
+- Keep architectural decisions documented
+- Update README files regularly
+
+When helping with code, always consider:
+1. Is this secure and compliant with legal requirements?
+2. Will this scale efficiently as the platform grows?
+3. Is this maintainable and testable?
+4. Does this follow the established patterns?
+5. Are we optimizing for the attorney user experience?
