@@ -1,0 +1,131 @@
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Browser]
+        MOBILE[Mobile App]
+    end
+
+    subgraph "CDN & Load Balancer"
+        CDN[Netlify CDN]
+        LB[Load Balancer]
+    end
+
+    subgraph "Frontend"
+        REACT[React + TypeScript<br/>Vite + Tailwind]
+        AUTH_F[Supabase Auth]
+        STATE[Zustand Store]
+    end
+
+    subgraph "API Gateway"
+        NGINX[Nginx Reverse Proxy]
+        CORS[CORS Handler]
+        RATE[Rate Limiter]
+    end
+
+    subgraph "Backend Services"
+        FLASK[Flask API Server]
+        AUTH_B[JWT Middleware]
+        VALID[Request Validator]
+        
+        subgraph "Business Logic"
+            CASE_SVC[Case Service]
+            VIDEO_SVC[Video Service]
+            ANALYSIS_SVC[Analysis Service]
+            REPORT_SVC[Report Service]
+        end
+    end
+
+    subgraph "Async Processing"
+        CELERY[Celery Workers]
+        REDIS[Redis Queue]
+        SCHEDULER[Celery Beat]
+    end
+
+    subgraph "AI/ML Pipeline"
+        VIDEO_AI[Video Analysis<br/>LLaVA-HF]
+        AUDIO_AI[Audio Transcription<br/>Whisper]
+        NLP_AI[Violation Detection<br/>Custom NLP]
+        SENTIMENT[Sentiment Analysis]
+    end
+
+    subgraph "Data Layer"
+        SUPABASE[(Supabase PostgreSQL)]
+        STORAGE[Digital Ocean Spaces]
+        CACHE[Redis Cache]
+    end
+
+    subgraph "External Services"
+        EMAIL[SendGrid Email]
+        MONITOR[Sentry Monitoring]
+        ANALYTICS[Google Analytics]
+    end
+
+    subgraph "Security & Compliance"
+        ENCRYPT[Encryption at Rest]
+        AUDIT[Audit Logging]
+        BACKUP[Automated Backups]
+    end
+
+    %% Client Connections
+    WEB --> CDN
+    MOBILE --> CDN
+    CDN --> NGINX
+
+    %% Frontend Flow
+    NGINX --> REACT
+    REACT --> AUTH_F
+    REACT --> STATE
+
+    %% API Flow
+    REACT --> NGINX
+    NGINX --> CORS
+    CORS --> RATE
+    RATE --> FLASK
+
+    %% Backend Flow
+    FLASK --> AUTH_B
+    AUTH_B --> VALID
+    VALID --> CASE_SVC
+    VALID --> VIDEO_SVC
+    VALID --> ANALYSIS_SVC
+    VALID --> REPORT_SVC
+
+    %% Async Processing
+    VIDEO_SVC --> REDIS
+    ANALYSIS_SVC --> REDIS
+    REDIS --> CELERY
+    SCHEDULER --> CELERY
+
+    %% AI Processing
+    CELERY --> VIDEO_AI
+    CELERY --> AUDIO_AI
+    CELERY --> NLP_AI
+    CELERY --> SENTIMENT
+
+    %% Data Access
+    FLASK --> SUPABASE
+    FLASK --> CACHE
+    VIDEO_SVC --> STORAGE
+    CELERY --> SUPABASE
+
+    %% External Integrations
+    REPORT_SVC --> EMAIL
+    FLASK --> MONITOR
+    REACT --> ANALYTICS
+
+    %% Security
+    SUPABASE --> ENCRYPT
+    FLASK --> AUDIT
+    SUPABASE --> BACKUP
+
+    %% Styling
+    classDef frontend fill:#e1f5fe
+    classDef backend fill:#f3e5f5
+    classDef ai fill:#e8f5e8
+    classDef data fill:#fff3e0
+    classDef external fill:#fce4ec
+
+    class REACT,AUTH_F,STATE frontend
+    class FLASK,AUTH_B,VALID,CASE_SVC,VIDEO_SVC,ANALYSIS_SVC,REPORT_SVC backend
+    class VIDEO_AI,AUDIO_AI,NLP_AI,SENTIMENT ai
+    class SUPABASE,STORAGE,CACHE data
+    class EMAIL,MONITOR,ANALYTICS external 
