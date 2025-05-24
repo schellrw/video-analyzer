@@ -1,0 +1,77 @@
+name: video-evidence-analyzer
+services:
+- name: backend
+  source_dir: backend
+  github:
+    repo: YOUR_USERNAME/video-evidence-analyzer
+    branch: main
+  run_command: gunicorn --bind 0.0.0.0:8080 run:app
+  environment_slug: python
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  envs:
+  - key: FLASK_ENV
+    value: production
+  - key: DATABASE_URL
+    value: ${db.DATABASE_URL}
+  - key: SUPABASE_URL
+    value: ${SUPABASE_URL}
+  - key: SUPABASE_SERVICE_KEY
+    value: ${SUPABASE_SERVICE_KEY}
+  - key: REDIS_URL
+    value: ${redis.DATABASE_URL}
+  - key: CELERY_BROKER_URL
+    value: ${redis.DATABASE_URL}
+  - key: DO_SPACES_KEY
+    value: ${DO_SPACES_KEY}
+  - key: DO_SPACES_SECRET
+    value: ${DO_SPACES_SECRET}
+  - key: DO_SPACES_ENDPOINT
+    value: ${DO_SPACES_ENDPOINT}
+  - key: DO_SPACES_BUCKET
+    value: ${DO_SPACES_BUCKET}
+  - key: JWT_SECRET_KEY
+    value: ${JWT_SECRET_KEY}
+  http_port: 8080
+
+- name: celery-worker
+  source_dir: backend
+  github:
+    repo: YOUR_USERNAME/video-evidence-analyzer
+    branch: main
+  run_command: celery -A app.celery worker --loglevel=info
+  environment_slug: python
+  instance_count: 1
+  instance_size_slug: basic-s
+  envs:
+  - key: DATABASE_URL
+    value: ${db.DATABASE_URL}
+  - key: REDIS_URL
+    value: ${redis.DATABASE_URL}
+  - key: CELERY_BROKER_URL
+    value: ${redis.DATABASE_URL}
+  - key: SUPABASE_URL
+    value: ${SUPABASE_URL}
+  - key: SUPABASE_SERVICE_KEY
+    value: ${SUPABASE_SERVICE_KEY}
+
+databases:
+- name: redis
+  engine: REDIS
+  version: "7"
+
+static_sites:
+- name: frontend
+  source_dir: frontend
+  github:
+    repo: YOUR_USERNAME/video-evidence-analyzer
+    branch: main
+  build_command: npm run build
+  output_dir: dist
+  envs:
+  - key: VITE_API_URL
+    value: ${backend.PUBLIC_URL}
+  - key: VITE_SUPABASE_URL
+    value: ${SUPABASE_URL}
+  - key: VITE_SUPABASE_ANON_KEY
+    value: ${VITE_SUPABASE_ANON_KEY} 

@@ -1,0 +1,40 @@
+[build]
+  base = "frontend"
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://YOUR_BACKEND_URL/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  VITE_API_URL = "https://YOUR_BACKEND_URL"
+  VITE_ENVIRONMENT = "production"
+
+[context.deploy-preview.environment]
+  VITE_API_URL = "https://YOUR_STAGING_BACKEND_URL"
+  VITE_ENVIRONMENT = "staging"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable" 
