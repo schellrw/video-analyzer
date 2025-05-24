@@ -1,74 +1,99 @@
 sequenceDiagram
-    participant U as 👨‍💼 Attorney
-    participant FE as 🌐 Frontend
-    participant API as 🔗 Flask API
-    participant AUTH as 🔐 Supabase Auth
-    participant DB as 🗄️ Database
-    participant QUEUE as ⚙️ Celery Queue
-    participant AI as 🤖 AI Pipeline
-    participant STORAGE as ☁️ File Storage
-    
+    participant Attorney as Attorney
+    participant Frontend as React Frontend
+    participant API as Flask API
+    participant Auth as Supabase Auth
+    participant DB as PostgreSQL
+    participant Storage as DO Spaces
+    participant Queue as Redis Queue
+    participant Worker as Celery Worker
+    participant AI as AI Models
+
     %% Authentication Flow
-    U->>FE: Login Request
-    FE->>AUTH: Authenticate User
-    AUTH-->>FE: JWT Token
-    FE-->>U: Login Success
-    
+    Attorney->>Frontend: Login
+    Frontend->>Auth: Authenticate
+    Auth-->>Frontend: JWT Token
+    Frontend-->>Attorney: Dashboard
+
     %% Case Creation
-    U->>FE: Create New Case
-    FE->>API: POST /api/v1/cases
-    API->>AUTH: Verify JWT
-    AUTH-->>API: User Verified
-    API->>DB: Create Case Record
-    DB-->>API: Case Created
-    API-->>FE: Case Response
-    FE-->>U: Case Dashboard
-    
+    Attorney->>Frontend: Create New Case
+    Frontend->>API: POST /api/cases
+    API->>Auth: Validate JWT
+    Auth-->>API: User ID
+    API->>DB: Insert Case
+    DB-->>API: Case ID
+    API-->>Frontend: Case Created
+    Frontend-->>Attorney: Case Dashboard
+
     %% Video Upload Flow
-    U->>FE: Upload Video Files
-    FE->>API: Request Upload URLs
-    API->>STORAGE: Generate Presigned URLs
-    STORAGE-->>API: Signed URLs
-    API-->>FE: Upload URLs
-    FE->>STORAGE: Direct Upload Video
-    STORAGE-->>FE: Upload Complete
+    Attorney->>Frontend: Upload Video
+    Frontend->>API: Request Upload URL
+    API->>Storage: Generate Presigned URL
+    Storage-->>API: Upload URL
+    API-->>Frontend: Presigned URL
+    Frontend->>Storage: Upload Video File
+    Storage-->>Frontend: Upload Complete
+    Frontend->>API: Confirm Upload
+    API->>DB: Update Video Record
     
-    %% Analysis Initiation
-    FE->>API: POST /api/v1/videos/analyze
-    API->>DB: Create Video Record
-    API->>QUEUE: Queue Analysis Job
-    QUEUE->>AI: Start Processing
-    API-->>FE: Analysis Started
-    FE-->>U: Processing Status
+    %% AI Analysis Initiation
+    API->>Queue: Queue Analysis Task
+    Queue-->>API: Task ID
+    API-->>Frontend: Analysis Started
+    Frontend-->>Attorney: Processing Notification
+
+    %% AI Processing
+    Worker->>Queue: Fetch Task
+    Queue-->>Worker: Video Analysis Task
+    Worker->>Storage: Download Video
+    Storage-->>Worker: Video File
     
-    %% AI Processing Pipeline
-    AI->>STORAGE: Download Video Chunks
-    STORAGE-->>AI: Video Data
-    AI->>AI: FFmpeg Processing
-    AI->>AI: Frame Sampling
-    AI->>AI: LLaVA Visual Analysis
-    AI->>AI: Whisper Transcription
-    AI->>AI: Violation Detection
-    AI->>DB: Store Analysis Results
-    
-    %% Real-time Updates
-    loop Processing Updates
-        AI->>API: Progress Update
-        API->>FE: WebSocket Update
-        FE->>U: Show Progress
+    %% Parallel AI Processing
+    par Video Analysis
+        Worker->>AI: Visual Analysis (LLaVA)
+        AI-->>Worker: Visual Results
+    and Audio Transcription
+        Worker->>AI: Audio Transcription (Whisper)
+        AI-->>Worker: Transcript
+    and Violation Detection
+        Worker->>AI: NLP Analysis
+        AI-->>Worker: Violation Detection
     end
     
-    %% Analysis Completion
-    AI->>DB: Final Results
-    AI->>API: Analysis Complete
-    API->>FE: WebSocket Notification
-    FE->>U: Analysis Ready
+    %% Store Results
+    Worker->>DB: Store Analysis Results
+    DB-->>Worker: Confirmation
+    Worker->>Queue: Task Complete
     
+    %% Notification
+    Worker->>API: Send Webhook
+    API->>Frontend: Real-time Update
+    Frontend-->>Attorney: Analysis Complete
+
+    %% Review Results
+    Attorney->>Frontend: View Analysis
+    Frontend->>API: GET /api/analysis/{id}
+    API->>DB: Fetch Results
+    DB-->>API: Analysis Data
+    API-->>Frontend: Analysis Results
+    Frontend-->>Attorney: Display Results
+
+    %% Human Review
+    Attorney->>Frontend: Review & Correct
+    Frontend->>API: POST /api/analysis/review
+    API->>DB: Update with Corrections
+    DB-->>API: Confirmation
+    API-->>Frontend: Review Saved
+
     %% Report Generation
-    U->>FE: Generate Report
-    FE->>API: GET /api/v1/analysis/report
-    API->>DB: Fetch Analysis Data
-    DB-->>API: Analysis Results
-    API->>API: Generate PDF Report
-    API-->>FE: Report Data
-    FE-->>U: Download Report
+    Attorney->>Frontend: Generate Report
+    Frontend->>API: POST /api/reports
+    API->>Queue: Queue Report Task
+    Worker->>Queue: Fetch Report Task
+    Worker->>DB: Gather Case Data
+    Worker->>AI: Generate Legal Report
+    AI-->>Worker: Report Content
+    Worker->>Storage: Save Report PDF
+    Worker->>DB: Update Report Status
+    API->>Frontend: Report Ready
+    Frontend-->>Attorney: Download Link 
