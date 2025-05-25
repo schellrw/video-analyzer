@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 from ..extensions import db
-from ..models import User, Profile
+from ..models import User, Profile, UserRole
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -37,11 +37,23 @@ def login():
                 expires_delta=timedelta(hours=24)
             )
             
+            # Create user response data
+            user_data = {
+                'id': str(user.id),
+                'email': user.email,
+                'firstName': user.profile.first_name if user.profile else '',
+                'lastName': user.profile.last_name if user.profile else '',
+                'organization': user.profile.organization if user.profile else '',
+                'role': user.profile.role.value if user.profile else 'attorney',
+                'is_active': user.is_active,
+                'is_verified': user.is_verified
+            }
+            
             return jsonify({
                 'success': True,
                 'data': {
                     'access_token': access_token,
-                    'user': user.to_dict()
+                    'user': user_data
                 },
                 'message': 'Login successful'
             })
@@ -99,12 +111,19 @@ def register():
         db.session.flush()  # Get the user ID
         
         # Create profile
+        # Convert role string to enum
+        role_enum = UserRole.ATTORNEY  # default
+        if role == 'investigator':
+            role_enum = UserRole.INVESTIGATOR
+        elif role == 'admin':
+            role_enum = UserRole.ADMIN
+        
         profile = Profile(
             id=user.id,
             first_name=first_name,
             last_name=last_name,
             organization=organization,
-            role=role
+            role=role_enum
         )
         
         db.session.add(profile)
@@ -116,17 +135,32 @@ def register():
             expires_delta=timedelta(hours=24)
         )
         
+        # Create user response data manually to avoid relationship issues
+        user_data = {
+            'id': str(user.id),
+            'email': user.email,
+            'firstName': profile.first_name,
+            'lastName': profile.last_name,
+            'organization': profile.organization,
+            'role': profile.role.value,
+            'is_active': user.is_active,
+            'is_verified': user.is_verified
+        }
+        
         return jsonify({
             'success': True,
             'data': {
                 'access_token': access_token,
-                'user': user.to_dict()
+                'user': user_data
             },
             'message': 'Registration successful'
         }), 201
         
     except Exception as e:
         db.session.rollback()
+        print(f"Registration error: {str(e)}")  # Debug logging
+        import traceback
+        traceback.print_exc()  # Print full stack trace
         return jsonify({
             'success': False,
             'message': 'Registration failed',

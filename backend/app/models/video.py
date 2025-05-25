@@ -69,7 +69,7 @@ class Video(db.Model):
     processing_error = Column(Text)
     
     # Additional Metadata
-    metadata = Column(db.JSON, default=dict)
+    extra_metadata = Column(db.JSON, default=dict)
     notes = Column(Text)
     is_evidence = Column(Boolean, default=True)
     
@@ -149,7 +149,7 @@ class Video(db.Model):
             'processing_started_at': self.processing_started_at.isoformat() if self.processing_started_at else None,
             'processing_completed_at': self.processing_completed_at.isoformat() if self.processing_completed_at else None,
             'processing_error': self.processing_error,
-            'metadata': self.metadata or {},
+            'metadata': self.extra_metadata or {},
             'notes': self.notes,
             'is_evidence': self.is_evidence,
             'created_at': self.created_at.isoformat(),

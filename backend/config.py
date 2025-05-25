@@ -6,6 +6,10 @@ Handles environment-specific configuration for the Video Evidence Analyzer backe
 import os
 from datetime import timedelta
 from typing import Dict, Any
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class Config:
