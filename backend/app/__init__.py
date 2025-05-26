@@ -34,6 +34,9 @@ def create_app(config_name: str = 'development') -> Flask:
     app.config.from_object(config_class)
     config_class.init_app(app)
     
+    # Disable automatic trailing slash redirects that cause CORS issues
+    app.url_map.strict_slashes = False
+    
     # Initialize extensions
     init_extensions(app)
     
@@ -46,8 +49,12 @@ def create_app(config_name: str = 'development') -> Flask:
     # Register error handlers
     register_error_handlers(app)
     
-    # Setup CORS
-    CORS(app, origins=app.config.get('CORS_ORIGINS', ['*']))
+    # Setup CORS with more permissive settings for development
+    CORS(app, 
+         origins=app.config.get('CORS_ORIGINS', ['*']),
+         allow_headers=['Content-Type', 'Authorization'],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+         supports_credentials=True)
     
     return app
 

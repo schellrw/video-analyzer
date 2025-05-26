@@ -42,7 +42,7 @@ class Case(db.Model):
     # Case Information
     name = Column(String(200), nullable=False)
     description = Column(Text)
-    case_number = Column(String(100), unique=True, index=True)
+    case_number = Column(String(100), index=True)  # Optional user-provided case number
     
     # Incident Details
     incident_date = Column(DateTime)
@@ -89,16 +89,7 @@ class Case(db.Model):
             'percentage': round(percentage, 2)
         }
     
-    def generate_case_number(self) -> str:
-        """Generate unique case number."""
-        if not self.case_number:
-            year = datetime.utcnow().year
-            # Simple case number format: CASE-YYYY-XXXX
-            case_count = Case.query.filter(
-                Case.created_at >= datetime(year, 1, 1)
-            ).count() + 1
-            self.case_number = f"CASE-{year}-{case_count:04d}"
-        return self.case_number
+
     
     def to_dict(self, include_videos: bool = False) -> dict:
         """Convert case to dictionary."""
