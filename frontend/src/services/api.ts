@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { supabase } from './supabase'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -10,18 +11,15 @@ const api = axios.create({
   },
 })
 
-// Add request interceptor to include auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth-storage')
-  if (token) {
-    try {
-      const authData = JSON.parse(token)
-      if (authData.state?.token) {
-        config.headers.Authorization = `Bearer ${authData.state.token}`
-      }
-    } catch (error) {
-      console.error('Error parsing auth token:', error)
+// Add request interceptor to include Supabase auth token
+api.interceptors.request.use(async (config) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`
     }
+  } catch (error) {
+    console.error('Error getting Supabase session:', error)
   }
   return config
 })
@@ -83,31 +81,6 @@ export interface CasesFilters {
   status?: string
   priority?: string
   search?: string
-}
-
-// Auth API endpoints
-export const authAPI = {
-  login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password })
-    return response.data
-  },
-
-  register: async (userData: {
-    email: string
-    password: string
-    firstName: string
-    lastName: string
-    organization?: string
-    role?: string
-  }) => {
-    const response = await api.post('/auth/register', userData)
-    return response.data
-  },
-
-  logout: async () => {
-    const response = await api.post('/auth/logout')
-    return response.data
-  },
 }
 
 // Cases API endpoints

@@ -5,7 +5,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
 from ..models.case import Case, CaseStatus, CasePriority
-from ..models.user import User
 from ..extensions import db
 
 cases_bp = Blueprint('cases', __name__)
@@ -25,7 +24,7 @@ def get_cases():
         search = request.args.get('search', '').strip()
         
         # Build query
-        query = Case.query.filter_by(user_id=current_user_id)
+        query = Case.query.filter_by(created_by=current_user_id)
         
         # Apply filters
         if status:
@@ -147,7 +146,7 @@ def create_case():
         
         # Create new case
         case = Case(
-            user_id=current_user_id,
+            created_by=current_user_id,
             name=data['name'],
             description=data.get('description'),
             case_number=data.get('case_number'),  # User-provided case number
@@ -193,7 +192,7 @@ def get_case(case_id):
         
         case = Case.query.filter_by(
             id=case_id,
-            user_id=current_user_id
+            created_by=current_user_id
         ).first()
         
         if not case:
@@ -232,7 +231,7 @@ def update_case(case_id):
         
         case = Case.query.filter_by(
             id=case_id,
-            user_id=current_user_id
+            created_by=current_user_id
         ).first()
         
         if not case:
@@ -320,7 +319,7 @@ def delete_case(case_id):
         
         case = Case.query.filter_by(
             id=case_id,
-            user_id=current_user_id
+            created_by=current_user_id
         ).first()
         
         if not case:
@@ -365,13 +364,13 @@ def get_case_stats():
         current_user_id = get_jwt_identity()
         
         # Get basic counts
-        total_cases = Case.query.filter_by(user_id=current_user_id).count()
+        total_cases = Case.query.filter_by(created_by=current_user_id).count()
         
         # Get counts by status
         status_counts = {}
         for status in CaseStatus:
             count = Case.query.filter_by(
-                user_id=current_user_id,
+                created_by=current_user_id,
                 status=status
             ).count()
             status_counts[status.value] = count
@@ -380,7 +379,7 @@ def get_case_stats():
         priority_counts = {}
         for priority in CasePriority:
             count = Case.query.filter_by(
-                user_id=current_user_id,
+                created_by=current_user_id,
                 priority=priority
             ).count()
             priority_counts[priority.value] = count
@@ -389,7 +388,7 @@ def get_case_stats():
         from datetime import timedelta
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         recent_cases = Case.query.filter(
-            Case.user_id == current_user_id,
+            Case.created_by == current_user_id,
             Case.created_at >= thirty_days_ago
         ).count()
         

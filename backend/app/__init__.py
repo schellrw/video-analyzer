@@ -69,7 +69,7 @@ def init_extensions(app: Flask) -> None:
 
 def register_blueprints(app: Flask) -> None:
     """Register application blueprints."""
-    from .routes.auth import auth_bp
+    from .routes.auth_supabase import auth_supabase_bp
     from .routes.cases import cases_bp
     from .routes.videos import videos_bp
     from .routes.analysis import analysis_bp
@@ -81,7 +81,7 @@ def register_blueprints(app: Flask) -> None:
     api_prefix = '/api'
     
     app.register_blueprint(health_bp, url_prefix=api_prefix)
-    app.register_blueprint(auth_bp, url_prefix=f'{api_prefix}/auth')
+    app.register_blueprint(auth_supabase_bp, url_prefix=f'{api_prefix}/auth')
     app.register_blueprint(cases_bp, url_prefix=f'{api_prefix}/cases')
     app.register_blueprint(videos_bp, url_prefix=f'{api_prefix}/videos')
     app.register_blueprint(analysis_bp, url_prefix=f'{api_prefix}/analysis')

@@ -37,7 +37,7 @@ class Case(db.Model):
     __tablename__ = 'cases'
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
+    created_by = Column(UUID(as_uuid=True), nullable=False, index=True)  # References auth.users.id
     
     # Case Information
     name = Column(String(200), nullable=False)
@@ -95,7 +95,7 @@ class Case(db.Model):
         """Convert case to dictionary."""
         result = {
             'id': str(self.id),
-            'user_id': str(self.user_id),
+            'created_by': str(self.created_by),
             'name': self.name,
             'description': self.description,
             'case_number': self.case_number,

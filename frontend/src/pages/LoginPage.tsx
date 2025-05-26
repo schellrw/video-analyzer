@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
-import { authAPI } from '@/services/api'
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true)
@@ -17,7 +16,7 @@ const LoginPage = () => {
   const [error, setError] = useState('')
   
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  const { signIn, signUp } = useAuthStore()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({
@@ -32,11 +31,11 @@ const LoginPage = () => {
     setError('')
 
     try {
-      let response
+      let result
       if (isLogin) {
-        response = await authAPI.login(formData.email, formData.password)
+        result = await signIn(formData.email, formData.password)
       } else {
-        response = await authAPI.register({
+        result = await signUp({
           email: formData.email,
           password: formData.password,
           firstName: formData.firstName,
@@ -46,14 +45,19 @@ const LoginPage = () => {
         })
       }
 
-      if (response.success) {
-        login(response.data.user, response.data.access_token)
-        navigate('/')
+      if (result.success) {
+        if (result.needsEmailConfirmation) {
+          // Redirect to email confirmation page
+          navigate(`/confirm-email?email=${encodeURIComponent(formData.email)}`)
+        } else {
+          // User is logged in, redirect to dashboard
+          navigate('/')
+        }
       } else {
-        setError(response.message)
+        setError(result.message || 'An error occurred')
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred')
+      setError(err.message || 'An error occurred')
     } finally {
       setLoading(false)
     }

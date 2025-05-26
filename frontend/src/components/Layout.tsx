@@ -8,7 +8,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation()
-  const { logout, user } = useAuthStore()
+  const { signOut, user } = useAuthStore()
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z' },
@@ -25,8 +25,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return location.pathname.startsWith(href)
   }
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await signOut()
   }
 
   return (
