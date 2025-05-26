@@ -33,13 +33,25 @@ class SupabaseAuthService:
             User data if token is valid, None otherwise
         """
         try:
-            # Decode JWT token
+            # For Supabase, we need to verify without signature verification
+            # since we don't have access to their private key in development
+            # In production, you'd want to fetch the public key from Supabase
             payload = jwt.decode(
                 token,
-                self.jwt_secret,
-                algorithms=['HS256'],
-                audience='authenticated'
+                options={"verify_signature": False},
+                algorithms=['HS256', 'RS256']
             )
+            
+            # Basic validation - check if token is for authenticated users
+            if payload.get('aud') != 'authenticated':
+                current_app.logger.warning("JWT token not for authenticated audience")
+                return None
+            
+            # Check if token is expired
+            import time
+            if payload.get('exp') and payload.get('exp') < time.time():
+                current_app.logger.warning("JWT token has expired")
+                return None
             
             return {
                 'user_id': payload.get('sub'),

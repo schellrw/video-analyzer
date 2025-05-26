@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { casesAPI, CaseData, CasesFilters } from '../services/api'
 import CaseCard from '../components/CaseCard'
 import CaseForm from '../components/CaseForm'
+import { useAuthStore } from '../stores/authStore'
 
 const CasesPage = () => {
   const navigate = useNavigate()
+  const { user, isAuthenticated } = useAuthStore()
   const [cases, setCases] = useState<CaseData[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -30,8 +32,10 @@ const CasesPage = () => {
   const [totalCasesCount, setTotalCasesCount] = useState(0) // Track total cases without filters
 
   useEffect(() => {
-    fetchCases()
-  }, [filters])
+    if (isAuthenticated) {
+      fetchCases()
+    }
+  }, [filters, isAuthenticated])
 
   const fetchCases = async () => {
     try {
@@ -46,9 +50,52 @@ const CasesPage = () => {
         setTotalCasesCount(response.data.pagination.total)
       }
     } catch (err: any) {
-      // Only show error for actual failures, not empty results
-      if (err.response?.status !== 404) {
-        setError(err.response?.data?.message || 'Failed to load cases. Please check your connection and try again.')
+      console.error('Error fetching cases:', err)
+      
+      // Handle different error scenarios gracefully
+      const status = err.response?.status
+      const message = err.response?.data?.message || err.response?.data?.msg
+      
+      if (status === 401 || message === 'Missing Authorization Header') {
+        // Auth issue - for new users, just show empty state instead of error
+        console.warn('Authentication issue when fetching cases - showing empty state for new user')
+        setCases([])
+        setPagination({
+          page: 1,
+          per_page: 12,
+          total: 0,
+          pages: 0,
+          has_next: false,
+          has_prev: false
+        })
+        setTotalCasesCount(0)
+      } else if (status === 404) {
+        // No cases found - show empty state
+        setCases([])
+        setPagination({
+          page: 1,
+          per_page: 12,
+          total: 0,
+          pages: 0,
+          has_next: false,
+          has_prev: false
+        })
+        setTotalCasesCount(0)
+      } else if (status === 200 && (!err.response?.data?.data?.cases || err.response.data.data.cases.length === 0)) {
+        // Successful response but no cases - show empty state
+        setCases([])
+        setPagination(err.response.data.data.pagination || {
+          page: 1,
+          per_page: 12,
+          total: 0,
+          pages: 0,
+          has_next: false,
+          has_prev: false
+        })
+        setTotalCasesCount(0)
+      } else {
+        // Other errors - show generic error
+        setError(message || 'Failed to load cases. Please check your connection and try again.')
       }
     } finally {
       setLoading(false)

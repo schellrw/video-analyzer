@@ -1,11 +1,13 @@
 import { useAuthStore } from '@/stores/authStore'
+import { useNavigate } from 'react-router-dom'
 
 const DashboardPage = () => {
-  const { user, logout } = useAuthStore()
+  const { user, signOut } = useAuthStore()
+  const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
-    window.location.href = '/login'
+  const handleLogout = async () => {
+    await signOut()
+    navigate('/login')
   }
 
   return (

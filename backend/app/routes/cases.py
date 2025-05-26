@@ -1,20 +1,20 @@
 """Cases Routes"""
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
 from ..models.case import Case, CaseStatus, CasePriority
 from ..extensions import db
+from ..utils.auth_decorators import supabase_jwt_required, get_current_user_id
 
 cases_bp = Blueprint('cases', __name__)
 
 @cases_bp.route('/', methods=['GET'])
-@jwt_required()
+@supabase_jwt_required
 def get_cases():
     """Get all cases for the current user with pagination and filtering."""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         
         # Get query parameters
         page = request.args.get('page', 1, type=int)
@@ -92,11 +92,11 @@ def get_cases():
         }), 500
 
 @cases_bp.route('/', methods=['POST'])
-@jwt_required()
+@supabase_jwt_required
 def create_case():
     """Create a new case."""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         data = request.get_json()
         
         if not data:
@@ -184,11 +184,11 @@ def create_case():
         }), 500
 
 @cases_bp.route('/<case_id>', methods=['GET'])
-@jwt_required()
+@supabase_jwt_required
 def get_case(case_id):
     """Get a specific case by ID."""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         
         case = Case.query.filter_by(
             id=case_id,
@@ -216,11 +216,11 @@ def get_case(case_id):
         }), 500
 
 @cases_bp.route('/<case_id>', methods=['PUT'])
-@jwt_required()
+@supabase_jwt_required
 def update_case(case_id):
     """Update a specific case."""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         data = request.get_json()
         
         if not data:
@@ -311,11 +311,11 @@ def update_case(case_id):
         }), 500
 
 @cases_bp.route('/<case_id>', methods=['DELETE'])
-@jwt_required()
+@supabase_jwt_required
 def delete_case(case_id):
     """Delete a specific case."""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         
         case = Case.query.filter_by(
             id=case_id,
@@ -357,11 +357,11 @@ def delete_case(case_id):
         }), 500
 
 @cases_bp.route('/stats', methods=['GET'])
-@jwt_required()
+@supabase_jwt_required
 def get_case_stats():
     """Get case statistics for the current user."""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = get_current_user_id()
         
         # Get basic counts
         total_cases = Case.query.filter_by(created_by=current_user_id).count()
