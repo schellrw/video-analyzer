@@ -24,6 +24,7 @@ botocore==1.34.0
 transformers==4.36.2
 torch==2.5.1
 torchaudio==2.5.1
+huggingface_hub==0.32.0
 # Use pip install instead: pip install git+https://github.com/openai/whisper.git
 # openai-whisper
 opencv-python==4.8.1.78

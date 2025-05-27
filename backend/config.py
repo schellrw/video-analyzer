@@ -54,6 +54,12 @@ class Config:
     CELERY_TIMEZONE = 'UTC'
     CELERY_ENABLE_UTC = True
     
+    # Celery key prefixes to avoid conflicts with other projects
+    CELERY_TASK_DEFAULT_QUEUE = 'video_analyzer'
+    CELERY_TASK_ROUTES = {
+        'app.tasks.*': {'queue': 'video_analyzer'}
+    }
+    
     # Digital Ocean Spaces Configuration
     DO_SPACES_KEY = os.environ.get('DO_SPACES_KEY')
     DO_SPACES_SECRET = os.environ.get('DO_SPACES_SECRET')
