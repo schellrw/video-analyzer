@@ -1,7 +1,7 @@
 # Deployment Guide
 
 ## Overview
-This guide covers deployment of the Video Evidence Analyzer platform to production environments.
+This guide covers deployment of the Video Analyzer platform to production environments.
 
 ## Prerequisites
 - Docker and Docker Compose
@@ -162,8 +162,8 @@ VITE_SENTRY_DSN=your-frontend-sentry-dsn
 
 1. **Setup Repository**
 ```bash
-git clone https://github.com/yourusername/video-evidence-analyzer.git
-cd video-evidence-analyzer
+git clone https://github.com/yourusername/video-analyzer.git
+cd video-analyzer
 ```
 
 2. **Deploy using App Spec**
@@ -193,8 +193,8 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 2. **Clone and Deploy**
 ```bash
-git clone https://github.com/yourusername/video-evidence-analyzer.git
-cd video-evidence-analyzer
+git clone https://github.com/yourusername/video-analyzer.git
+cd video-analyzer
 
 # Copy environment files
 cp backend/.env.example backend/.env

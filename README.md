@@ -1,11 +1,11 @@
-# Video Evidence Analyzer
+# Video Analyzer
 
-A comprehensive SaaS platform for civil rights attorneys to analyze video evidence using AI-powered tools. This platform helps legal professionals efficiently process bodycam footage, security recordings, and mobile video evidence to identify potential civil rights violations and generate detailed legal reports.
+A comprehensive SaaS platform for analyzing videos using AI-powered tools. This platform helps users efficiently process various types of video content including bodycam footage, security recordings, and mobile video recordings to extract insights and generate detailed reports.
 
 ## 🚀 Features
 
 ### Core Functionality
-- **Video Upload & Management**: Secure upload and organization of video evidence
+- **Video Upload & Management**: Secure upload and organization of video content
 - **AI-Powered Analysis**: Automated transcription, object detection, and violation identification
 - **Case Management**: Organize evidence by legal cases with metadata and tags
 - **Legal Report Generation**: Automated generation of professional legal reports
@@ -28,7 +28,7 @@ A comprehensive SaaS platform for civil rights attorneys to analyze video eviden
 ## 🏗️ Architecture
 
 ```
-video-evidence-analyzer/
+video-analyzer/
 ├── frontend/                 # React + Vite + TypeScript
 ├── backend/                  # Flask + SQLAlchemy + Celery
 ├── ai-models/               # AI/ML processing modules
@@ -83,8 +83,8 @@ video-evidence-analyzer/
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/video-evidence-analyzer.git
-cd video-evidence-analyzer
+git clone https://github.com/yourusername/video-analyzer.git
+cd video-analyzer
 ```
 
 2. **Set up environment variables**

@@ -1,8 +1,8 @@
-# Video Evidence Analysis Platform - Technical Architecture
+# Video Analyzer Platform - Technical Architecture
 
 ## 1. System Overview
 
-The Video Evidence Analysis Platform is built as a modern, scalable SaaS application with a clear separation of concerns between frontend, backend, AI processing, and data storage layers.
+The Video Analyzer Platform is built as a modern, scalable SaaS application with a clear separation of concerns between frontend, backend, AI processing, and data storage layers.
 
 ### 1.1 High-Level Architecture
 - **Frontend**: React + Vite SPA deployed on Netlify

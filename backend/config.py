@@ -1,6 +1,6 @@
 """
 Flask Configuration Module
-Handles environment-specific configuration for the Video Evidence Analyzer backend.
+Handles environment-specific configuration for the Video Analyzer backend.
 """
 
 import os
@@ -58,7 +58,7 @@ class Config:
     DO_SPACES_KEY = os.environ.get('DO_SPACES_KEY')
     DO_SPACES_SECRET = os.environ.get('DO_SPACES_SECRET')
     DO_SPACES_ENDPOINT = os.environ.get('DO_SPACES_ENDPOINT', 'https://nyc3.digitaloceanspaces.com')
-    DO_SPACES_BUCKET = os.environ.get('DO_SPACES_BUCKET', 'video-evidence-analyzer')
+    DO_SPACES_BUCKET = os.environ.get('DO_SPACES_BUCKET', 'video-analyzer')
     DO_SPACES_REGION = os.environ.get('DO_SPACES_REGION', 'nyc3')
     
     # File Upload Configuration
@@ -76,7 +76,7 @@ class Config:
     
     # Email Configuration (SendGrid)
     SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
-    FROM_EMAIL = os.environ.get('FROM_EMAIL', 'noreply@video-evidence-analyzer.com')
+    FROM_EMAIL = os.environ.get('FROM_EMAIL', 'noreply@videoanalyzer.tech')
     
     # Rate Limiting
     RATELIMIT_STORAGE_URL = REDIS_URL
@@ -87,7 +87,7 @@ class Config:
     CORS_ORIGINS = [
         'http://localhost:3000',  # Development frontend
         'http://localhost:5173',  # Vite dev server
-        'https://video-evidence-analyzer.netlify.app',  # Production frontend
+        'https://videoanalyzer.tech',  # Production frontend
     ]
     
     # Logging Configuration
@@ -157,7 +157,7 @@ class ProductionConfig(Config):
     
     # Strict CORS in production
     CORS_ORIGINS = [
-        'https://video-evidence-analyzer.netlify.app',
+                    'https://videoanalyzer.tech',
         'https://yourdomain.com',
     ]
     
@@ -208,7 +208,7 @@ class StagingConfig(ProductionConfig):
     
     # Allow staging domains
     CORS_ORIGINS = [
-        'https://staging.video-evidence-analyzer.netlify.app',
+                    'https://staging.videoanalyzer.tech',
         'https://staging.yourdomain.com',
     ]
 

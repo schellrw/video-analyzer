@@ -1,7 +1,7 @@
-# Video Evidence Analysis Platform - Cursor AI Rules
+# Video Analyzer Platform - Cursor AI Rules
 
 ## Project Context
-You are working on a Video Evidence Analysis Platform - a SaaS tool for civil rights attorneys to analyze video evidence (bodycam, security footage, mobile recordings) using AI to detect potential violations and generate legal reports.
+You are working on a Video Analyzer Platform - a SaaS tool for analyzing videos (bodycam, security footage, mobile recordings) using AI to extract insights and generate reports.
 
 ## Tech Stack
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
@@ -64,7 +64,7 @@ You are working on a Video Evidence Analysis Platform - a SaaS tool for civil ri
 
 ## File Structure Expectations
 ```
-video-evidence-analyzer/
+video-analyzer/
 ├── frontend/src/
 │   ├── components/
 │   ├── pages/

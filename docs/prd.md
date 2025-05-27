@@ -1,9 +1,9 @@
-# Video Evidence Analysis Platform - Product Requirements Document
+# Video Analyzer Platform - Product Requirements Document
 
 ## 1. Executive Summary
 
 ### Product Vision
-A SaaS platform that enables civil rights attorneys and legal professionals to efficiently analyze video evidence for potential violations of civil rights, particularly Section 1983 violations, through automated video analysis, transcription, and violation detection. The platform processes all types of video evidence including police bodycam footage, security cameras, Ring doorbells, dashcam footage, and mobile phone recordings.
+A SaaS platform that enables users to efficiently analyze video content using AI-powered tools for automated video analysis, transcription, and insight detection. The platform processes all types of video content including security footage, mobile recordings, dashcam footage, and other video sources to extract meaningful insights and generate detailed reports.
 
 ### Target Users
 - **Primary**: Civil rights attorneys investigating misconduct and rights violations

@@ -1,9 +1,9 @@
-name: video-evidence-analyzer
+name: video-analyzer
 services:
 - name: backend
   source_dir: backend
   github:
-    repo: YOUR_USERNAME/video-evidence-analyzer
+    repo: YOUR_USERNAME/video-analyzer
     branch: main
   run_command: gunicorn --bind 0.0.0.0:8080 run:app
   environment_slug: python
@@ -37,7 +37,7 @@ services:
 - name: celery-worker
   source_dir: backend
   github:
-    repo: YOUR_USERNAME/video-evidence-analyzer
+    repo: YOUR_USERNAME/video-analyzer
     branch: main
   run_command: celery -A app.celery worker --loglevel=info
   environment_slug: python
@@ -64,7 +64,7 @@ static_sites:
 - name: frontend
   source_dir: frontend
   github:
-    repo: YOUR_USERNAME/video-evidence-analyzer
+    repo: YOUR_USERNAME/video-analyzer
     branch: main
   build_command: npm run build
   output_dir: dist

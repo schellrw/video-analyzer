@@ -32,7 +32,7 @@ class CasePriority(Enum):
 
 class Case(db.Model):
     """
-    Legal case model for organizing video evidence.
+    Legal case model for organizing video content.
     """
     __tablename__ = 'cases'
     

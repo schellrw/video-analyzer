@@ -42,7 +42,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </svg>
               </div>
               <h1 className="ml-3 text-lg font-semibold text-gray-900">
-                Video Evidence
+                Video Analyzer
               </h1>
             </div>
           </div>
@@ -113,7 +113,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Mobile header */}
         <div className="md:hidden bg-white shadow-sm border-b">
           <div className="px-4 py-3 flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-gray-900">Video Evidence</h1>
+            <h1 className="text-lg font-semibold text-gray-900">Video Analyzer</h1>
             <button
               onClick={handleLogout}
               className="text-gray-400 hover:text-gray-600"

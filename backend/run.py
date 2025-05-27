@@ -1,6 +1,6 @@
 """
 Flask Application Entry Point
-Main entry point for the Video Evidence Analyzer backend API.
+Main entry point for the Video Analyzer backend API.
 """
 
 import os

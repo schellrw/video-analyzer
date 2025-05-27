@@ -8,6 +8,6 @@ def health_check():
     """Health check endpoint."""
     return jsonify({
         'success': True,
-        'message': 'Video Evidence Analyzer API is running',
+        'message': 'Video Analyzer API is running',
         'status': 'healthy'
     }) 

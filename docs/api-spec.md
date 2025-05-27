@@ -1,8 +1,8 @@
-# Video Evidence Analyzer API Specification
+# Video Analyzer API Specification
 
 ## Base URL
 - Development: `http://localhost:5000/api`
-- Production: `https://api.video-evidence-analyzer.com/api`
+- Production: `https://api.videoanalyzer.tech/api`
 
 ## Authentication
 All authenticated endpoints require a JWT token in the Authorization header:

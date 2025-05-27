@@ -1,6 +1,6 @@
 """
 Database Models Package
-Contains all SQLAlchemy models for the Video Evidence Analyzer.
+Contains all SQLAlchemy models for the Video Analyzer.
 """
 
 from .profile import Profile, UserRole
