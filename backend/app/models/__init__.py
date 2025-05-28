@@ -5,8 +5,8 @@ Contains all SQLAlchemy models for the Video Analyzer.
 
 from .profile import Profile, UserRole
 from .case import Case
-from .video import Video
-from .analysis import AnalysisResult
+from .video import Video, VideoStatus, AnalysisStatus
+from .analysis import AnalysisResult, AnalysisType
 from .report import Report
 
 __all__ = [
@@ -15,6 +15,9 @@ __all__ = [
     'UserRole',
     'Case',
     'Video',
+    'VideoStatus',
+    'AnalysisStatus',
     'AnalysisResult',
+    'AnalysisType',
     'Report'
 ] 
