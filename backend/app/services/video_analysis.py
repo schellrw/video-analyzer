@@ -27,22 +27,50 @@ class VideoAnalysisService:
     def __init__(self, use_cache: bool = True):
         """Initialize the video analysis service."""
         self.hf_api_key = os.getenv('HUGGINGFACE_API_KEY')
-        self.llava_model = os.getenv('LLAVA_MODEL', 'llava-hf/llava-1.5-7b-hf')
+        self.nebius_api_key = os.getenv('NEBIUS_API_KEY')  # New: Direct Nebius API key
+        
+        # Cost-effective model selection (in order of preference)
+        self.model_options = [
+            'Qwen/Qwen2-VL-7B-Instruct',     # Most cost-effective: $0.04/$0.12 per 1M tokens
+            'Llava-hf/llava-1.5-7b-hf',      # Alternative: $0.04/$0.12 per 1M tokens  
+            'Llava-hf/llava-1.5-13b-hf',     # Fallback: $0.04/$0.12 per 1M tokens
+            'Qwen/Qwen2-VL-72B-Instruct'     # Expensive fallback: $0.13/$0.40 per 1M tokens
+        ]
+        
+        # Use environment variable for model selection, default to most cost-effective
+        self.llava_model = os.getenv('LLAVA_MODEL', self.model_options[0])
+        
+        self.inference_provider = os.getenv('INFERENCE_PROVIDER', 'nebius')  # New: Provider selection
         self.use_cache = use_cache
         
-        if not self.hf_api_key:
-            raise ValueError("HUGGINGFACE_API_KEY environment variable is required")
+        # Determine which API key to use
+        if self.nebius_api_key and self.inference_provider == 'nebius':
+            # Use direct Nebius API key (recommended for better performance)
+            api_key = self.nebius_api_key
+            provider = None  # Direct connection
+            logger.info("Using direct Nebius API key")
+        elif self.hf_api_key and self.inference_provider == 'nebius':
+            # Use HF token with Nebius provider routing
+            api_key = self.hf_api_key
+            provider = 'nebius'
+            logger.info("Using Hugging Face token with nebius provider routing")
+        elif self.hf_api_key:
+            # Fallback to standard HF
+            api_key = self.hf_api_key
+            provider = None
+            logger.info("Using standard Hugging Face API")
+        else:
+            raise ValueError("No valid API key found. Please set either NEBIUS_API_KEY or HUGGINGFACE_API_KEY")
         
-        # Initialize Hugging Face client with auto provider selection
-        self.client = InferenceClient(
-            api_key=self.hf_api_key,
-            provider="auto"
-        )
+        try:
+            # Initialize the InferenceClient
+            self.client = InferenceClient(token=api_key)
+            logger.info(f"InferenceClient initialized successfully with provider: {provider or 'standard'}")
+        except Exception as e:
+            logger.error(f"Failed to initialize InferenceClient: {e}")
+            raise
         
-        # Cache for analysis results to avoid re-processing
-        self.analysis_cache = {}
-        
-        logger.info(f"VideoAnalysisService initialized with model: {self.llava_model}")
+        logger.info(f"VideoAnalysisService initialized with model: {self.llava_model} (provider: {self.inference_provider})")
     
     def extract_smart_frames(self, video_path: str, max_frames: int = 30, 
                            strategy: str = 'uniform') -> List[Dict[str, Any]]:

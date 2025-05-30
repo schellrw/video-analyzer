@@ -52,8 +52,14 @@ class ReportGenerationService:
     
     def _setup_custom_styles(self):
         """Setup custom paragraph styles for the report."""
+        
+        # Helper function to safely add styles
+        def add_style_if_not_exists(style_name, style_obj):
+            if style_name not in self.styles:
+                self.styles.add(style_obj)
+        
         # Title style
-        self.styles.add(ParagraphStyle(
+        add_style_if_not_exists('ReportTitle', ParagraphStyle(
             name='ReportTitle',
             parent=self.styles['Title'],
             fontSize=24,
@@ -64,7 +70,7 @@ class ReportGenerationService:
         ))
         
         # Section header style
-        self.styles.add(ParagraphStyle(
+        add_style_if_not_exists('SectionHeader', ParagraphStyle(
             name='SectionHeader',
             parent=self.styles['Heading1'],
             fontSize=16,
@@ -75,7 +81,7 @@ class ReportGenerationService:
         ))
         
         # Subsection header style
-        self.styles.add(ParagraphStyle(
+        add_style_if_not_exists('SubsectionHeader', ParagraphStyle(
             name='SubsectionHeader',
             parent=self.styles['Heading2'],
             fontSize=14,
@@ -85,9 +91,9 @@ class ReportGenerationService:
             fontName='Helvetica-Bold'
         ))
         
-        # Body text style
-        self.styles.add(ParagraphStyle(
-            name='BodyText',
+        # Body text style - use custom name to avoid conflicts
+        add_style_if_not_exists('ReportBodyText', ParagraphStyle(
+            name='ReportBodyText',
             parent=self.styles['Normal'],
             fontSize=11,
             spaceAfter=6,
@@ -96,7 +102,7 @@ class ReportGenerationService:
         ))
         
         # Violation alert style
-        self.styles.add(ParagraphStyle(
+        add_style_if_not_exists('ViolationAlert', ParagraphStyle(
             name='ViolationAlert',
             parent=self.styles['Normal'],
             fontSize=12,
@@ -110,7 +116,7 @@ class ReportGenerationService:
         ))
         
         # Timestamp style
-        self.styles.add(ParagraphStyle(
+        add_style_if_not_exists('Timestamp', ParagraphStyle(
             name='Timestamp',
             parent=self.styles['Normal'],
             fontSize=10,
@@ -282,7 +288,7 @@ class ReportGenerationService:
         This analysis does not constitute legal advice or definitive evidence.
         """
         
-        elements.append(Paragraph(disclaimer_text, self.styles['BodyText']))
+        elements.append(Paragraph(disclaimer_text, self.styles['ReportBodyText']))
         
         return elements
     
@@ -302,7 +308,7 @@ class ReportGenerationService:
         advanced AI vision models specifically trained for law enforcement scenario analysis.
         """
         
-        elements.append(Paragraph(overview_text, self.styles['BodyText']))
+        elements.append(Paragraph(overview_text, self.styles['ReportBodyText']))
         elements.append(Spacer(1, 12))
         
         # Key findings
@@ -316,11 +322,11 @@ class ReportGenerationService:
                 (Confidence: {finding.get('confidence', 0):.1%})<br/>
                 {finding.get('description', 'No description available')[:200]}...
                 """
-                elements.append(Paragraph(finding_text, self.styles['BodyText']))
+                elements.append(Paragraph(finding_text, self.styles['ReportBodyText']))
                 elements.append(Spacer(1, 6))
         else:
             elements.append(Paragraph("No significant findings detected in the analyzed frames.", 
-                                    self.styles['BodyText']))
+                                    self.styles['ReportBodyText']))
         
         elements.append(Spacer(1, 12))
         
@@ -329,7 +335,7 @@ class ReportGenerationService:
         if violations:
             elements.append(Paragraph("Potential Violations Detected:", self.styles['SubsectionHeader']))
             for violation in violations:
-                elements.append(Paragraph(f"• {violation.title()}", self.styles['BodyText']))
+                elements.append(Paragraph(f"• {violation.title()}", self.styles['ReportBodyText']))
         
         elements.append(Spacer(1, 12))
         
@@ -338,7 +344,7 @@ class ReportGenerationService:
         if recommendations:
             elements.append(Paragraph("Priority Recommendations:", self.styles['SubsectionHeader']))
             for rec in recommendations[:3]:  # Top 3 recommendations
-                elements.append(Paragraph(f"• {rec}", self.styles['BodyText']))
+                elements.append(Paragraph(f"• {rec}", self.styles['ReportBodyText']))
         
         return elements
     
@@ -353,13 +359,13 @@ class ReportGenerationService:
         if not timeline:
             elements.append(Paragraph(
                 "No violations detected in the analyzed timeframe.",
-                self.styles['BodyText']
+                self.styles['ReportBodyText']
             ))
             return elements
         
         elements.append(Paragraph(
             "The following timeline shows detected violations ordered by priority (severity × confidence):",
-            self.styles['BodyText']
+            self.styles['ReportBodyText']
         ))
         elements.append(Spacer(1, 12))
         
@@ -422,7 +428,7 @@ class ReportGenerationService:
         elements.append(Paragraph(
             f"This section provides detailed analysis for all {len(frame_analyses)} analyzed frames. "
             "Only frames with detected concerns are shown in detail.",
-            self.styles['BodyText']
+            self.styles['ReportBodyText']
         ))
         elements.append(Spacer(1, 12))
         
@@ -431,7 +437,7 @@ class ReportGenerationService:
         if not concerning_frames:
             elements.append(Paragraph(
                 "No concerning activities detected in any analyzed frames.",
-                self.styles['BodyText']
+                self.styles['ReportBodyText']
             ))
             return elements
         
@@ -469,7 +475,7 @@ class ReportGenerationService:
             
             # Description
             description = frame.get('description', 'No description available.')
-            elements.append(Paragraph(f"<b>Analysis:</b> {description}", self.styles['BodyText']))
+            elements.append(Paragraph(f"<b>Analysis:</b> {description}", self.styles['ReportBodyText']))
             
             # Key objects and actions
             key_objects = frame.get('key_objects', [])
@@ -481,15 +487,15 @@ class ReportGenerationService:
                 
                 if key_objects:
                     elements.append(Paragraph(f"<b>Key Objects:</b> {', '.join(key_objects)}", 
-                                            self.styles['BodyText']))
+                                            self.styles['ReportBodyText']))
                 
                 if officer_actions:
                     elements.append(Paragraph(f"<b>Officer Actions:</b> {', '.join(officer_actions)}", 
-                                            self.styles['BodyText']))
+                                            self.styles['ReportBodyText']))
                 
                 if civilian_actions:
                     elements.append(Paragraph(f"<b>Civilian Actions:</b> {', '.join(civilian_actions)}", 
-                                            self.styles['BodyText']))
+                                            self.styles['ReportBodyText']))
             
             elements.append(Spacer(1, 16))
         
@@ -583,19 +589,19 @@ class ReportGenerationService:
         if not recommendations:
             elements.append(Paragraph(
                 "No specific recommendations generated based on the analysis results.",
-                self.styles['BodyText']
+                self.styles['ReportBodyText']
             ))
             return elements
         
         elements.append(Paragraph(
             "Based on the analysis results, the following recommendations are provided:",
-            self.styles['BodyText']
+            self.styles['ReportBodyText']
         ))
         elements.append(Spacer(1, 12))
         
         for i, recommendation in enumerate(recommendations, 1):
             rec_text = f"<b>{i}.</b> {recommendation}"
-            elements.append(Paragraph(rec_text, self.styles['BodyText']))
+            elements.append(Paragraph(rec_text, self.styles['ReportBodyText']))
             elements.append(Spacer(1, 6))
         
         elements.append(Spacer(1, 12))
@@ -612,7 +618,7 @@ class ReportGenerationService:
         elements.append(Paragraph("General Recommendations:", self.styles['SubsectionHeader']))
         
         for rec in general_recs:
-            elements.append(Paragraph(f"• {rec}", self.styles['BodyText']))
+            elements.append(Paragraph(f"• {rec}", self.styles['ReportBodyText']))
             elements.append(Spacer(1, 4))
         
         return elements
@@ -637,7 +643,7 @@ class ReportGenerationService:
         Confidence scores were calculated based on the specificity and certainty of the AI's analysis.
         """
         
-        elements.append(Paragraph(methodology_text, self.styles['BodyText']))
+        elements.append(Paragraph(methodology_text, self.styles['ReportBodyText']))
         elements.append(Spacer(1, 12))
         
         # Technical specifications
@@ -690,7 +696,7 @@ class ReportGenerationService:
         and other available evidence before drawing legal conclusions.
         """
         
-        elements.append(Paragraph(limitations_text, self.styles['BodyText']))
+        elements.append(Paragraph(limitations_text, self.styles['ReportBodyText']))
         
         return elements
     
@@ -735,7 +741,7 @@ class ReportGenerationService:
             • Processing Time: {analysis_results.get('processing_time', 0):.2f} seconds
             """
             
-            story.append(Paragraph(stats_text, self.styles['BodyText']))
+            story.append(Paragraph(stats_text, self.styles['ReportBodyText']))
             
             # Build PDF
             doc.build(story)
