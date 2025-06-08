@@ -1,6 +1,9 @@
 # custom user-specified
 /old
 /nbs
+guides/
+reports/
+tests/
 
 # ==== IMPORTANT ADDITIONS ====
 # Node.js

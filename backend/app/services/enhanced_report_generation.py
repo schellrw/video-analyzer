@@ -110,6 +110,20 @@ class EnhancedReportGenerationService:
             borderPadding=8
         ))
         
+        # Medium priority violation style
+        self.styles.add(ParagraphStyle(
+            name='MediumPriorityViolation',
+            parent=self.styles['Normal'],
+            fontSize=11,
+            spaceAfter=10,
+            textColor=self.colors['warning'],
+            fontName='Helvetica-Bold',
+            backColor=HexColor('#fffbeb'),
+            borderColor=self.colors['warning'],
+            borderWidth=1,
+            borderPadding=8
+        ))
+        
         # Transcript style
         self.styles.add(ParagraphStyle(
             name='TranscriptText',
@@ -200,70 +214,104 @@ class EnhancedReportGenerationService:
         elements.append(Paragraph("EXECUTIVE SUMMARY", self.styles['Heading1']))
         elements.append(Spacer(1, 12))
         
-        # Get violations from the actual data structure
-        violations_detected = analysis_results.get('violations_detected', [])
-        violation_timeline = analysis_results.get('violation_timeline', [])
-        
-        # Convert timeline to violation-like objects for processing
-        violations = []
-        for timeline_item in violation_timeline:
-            violations.append({
-                'type': ', '.join(timeline_item.get('violations', [])),
-                'timestamp_formatted': timeline_item.get('timestamp_formatted', ''),
-                'confidence': timeline_item.get('confidence', 0),
-                'description': timeline_item.get('description', ''),
-                'severity': timeline_item.get('severity', 'low')
-            })
-        
-        high_priority_violations = self._filter_high_priority_violations(violations)
-        
-        # Summary overview
+        # Get summary data
         summary = analysis_results.get('summary', {})
+        violations = analysis_results.get('violations', [])
+        violations_detected = summary.get('violations_detected', [])
         total_frames = analysis_results.get('total_frames_analyzed', 0)
-        processing_time = analysis_results.get('processing_time', 0)
         
-        overview_text = f"""
-        This report presents the automated analysis of {total_frames} key video frames, completed in 
-        {processing_time:.1f} seconds. The analysis identified {len(high_priority_violations)} high-priority 
-        violations and {len(violations) - len(high_priority_violations)} additional concerns requiring review.
+        # Confidence analysis - show variation
+        frame_analyses = analysis_results.get('frame_analyses', [])
+        if frame_analyses:
+            confidences = [f.get('confidence', 0) for f in frame_analyses]
+            min_conf = min(confidences) if confidences else 0
+            max_conf = max(confidences) if confidences else 0
+            avg_conf = sum(confidences) / len(confidences) if confidences else 0
+            
+            # Detect if all confidences are the same (potential issue)
+            unique_confidences = len(set(round(c, 2) for c in confidences))
+            
+            confidence_text = f"""
+            Analysis Confidence Range: {min_conf:.1%} - {max_conf:.1%} (Average: {avg_conf:.1%})
+            Confidence Variation: {unique_confidences} distinct confidence levels across {len(confidences)} frames
+            """
+            
+            if unique_confidences <= 2:
+                confidence_text += "\n⚠️ Note: Limited confidence variation detected - manual review recommended"
+        else:
+            confidence_text = "Confidence analysis not available"
+        
+        elements.append(Paragraph("Analysis Quality Assessment:", self.styles['Heading2']))
+        elements.append(Paragraph(confidence_text, self.styles['Normal']))
+        elements.append(Spacer(1, 12))
+        
+        # Prioritize violations over general concerns to reduce overlap
+        high_priority_violations = [v for v in violations if v.get('priority_score', 0) > 0.8]
+        
+        # Overall assessment
+        overall_severity = analysis_results.get('severity_assessment', 'low').upper()
+        concerns_found = analysis_results.get('concerns_found', False)
+        
+        if high_priority_violations:
+            status_text = f"🚨 HIGH PRIORITY: {len(high_priority_violations)} significant violations identified"
+            elements.append(Paragraph(status_text, self.styles['CriticalViolation']))
+        elif violations:
+            status_text = f"⚠️ CONCERNS DETECTED: {len(violations)} potential issues identified"
+            elements.append(Paragraph(status_text, self.styles['HighPriorityViolation']))
+        elif concerns_found:
+            status_text = f"ℹ️ REVIEW RECOMMENDED: General concerns detected in {summary.get('total_concerning_frames', 0)} frames"
+            elements.append(Paragraph(status_text, self.styles['MediumPriorityViolation']))
+        else:
+            status_text = "✅ NO SIGNIFICANT VIOLATIONS: Analysis indicates appropriate conduct"
+            elements.append(Paragraph(status_text, self.styles['Normal']))
+        
+        elements.append(Spacer(1, 12))
+        
+        # Frame sampling methodology explanation
+        extraction_strategy = analysis_results.get('extraction_strategy', 'unknown')
+        sampling_text = f"""
+        Frame Selection Method: {extraction_strategy.title()} sampling
+        Frames Analyzed: {total_frames} from video
+        Coverage: Distributed across non-blackout segments with motion-based prioritization
         """
+        elements.append(Paragraph("Sampling Methodology:", self.styles['Heading2']))
+        elements.append(Paragraph(sampling_text, self.styles['Normal']))
+        elements.append(Spacer(1, 12))
         
-        elements.append(Paragraph(overview_text, self.styles['ExecutiveSummary']))
-        elements.append(Spacer(1, 16))
-        
-        # Critical findings alert
-        if high_priority_violations or analysis_results.get('concerns_found', False):
-            critical_text = f"⚠️ CRITICAL FINDINGS: {len(violations)} VIOLATIONS/CONCERNS DETECTED"
-            elements.append(Paragraph(critical_text, self.styles['CriticalViolation']))
-            elements.append(Spacer(1, 12))
-        
-        # Top violations or concerning findings
-        elements.append(Paragraph("Most Significant Findings:", self.styles['Heading2']))
-        elements.append(Spacer(1, 8))
-        
+        # Top violations or concerning findings (reduce redundancy)
         if violations:
-            for i, violation in enumerate(violations[:3], 1):
-                violation_text = self._format_violation_for_executive_summary(violation, i)
+            elements.append(Paragraph("Primary Concerns Identified:", self.styles['Heading2']))
+            elements.append(Spacer(1, 8))
+            
+            # Group violations by type to avoid duplication
+            violation_types = {}
+            for violation in violations[:5]:  # Top 5 violations
+                v_type = violation.get('type', 'unknown')
+                if v_type not in violation_types:
+                    violation_types[v_type] = []
+                violation_types[v_type].append(violation)
+            
+            for i, (v_type, v_list) in enumerate(violation_types.items(), 1):
+                primary_violation = v_list[0]  # Use the highest priority one
+                additional_count = len(v_list) - 1
+                
+                violation_text = self._format_violation_for_executive_summary(primary_violation, i)
+                if additional_count > 0:
+                    violation_text += f" (+{additional_count} similar instances)"
+                    
                 elements.append(Paragraph(violation_text, self.styles['HighPriorityViolation']))
                 elements.append(Spacer(1, 8))
-        else:
-            # Show general detected concerns
-            if violations_detected:
-                elements.append(Paragraph(f"Detected concerns: {', '.join(violations_detected)}", 
-                                        self.styles['HighPriorityViolation']))
-            else:
-                elements.append(Paragraph("No specific violations detected, but analysis indicates concerns.", 
-                                        self.styles['Normal']))
         
-        # Quick statistics
+        # Quick statistics with better context
         elements.append(Spacer(1, 12))
         elements.append(Paragraph("Analysis Overview:", self.styles['Heading2']))
         
         stats_data = [
-            ['Overall Severity', analysis_results.get('severity_assessment', 'low').upper()],
-            ['Confidence Level', f"{summary.get('average_confidence', 0):.1%}"],
-            ['Frames with Concerns', f"{summary.get('total_concerning_frames', 0)}/{total_frames}"],
-            ['Concerns Found', 'YES' if analysis_results.get('concerns_found', False) else 'NO']
+            ['Overall Severity Level', overall_severity],
+            ['Average Analysis Confidence', f"{summary.get('average_confidence', 0):.1%}"],
+            ['Frames with Detected Concerns', f"{summary.get('total_concerning_frames', 0)}/{total_frames}"],
+            ['Unique Violation Types', str(len(violations_detected))],
+            ['Primary Concerns Found', 'YES' if concerns_found else 'NO']
         ]
         
         stats_table = Table(stats_data, colWidths=[2*inch, 2*inch])
