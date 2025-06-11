@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 import base64
 import io
+import textwrap
 
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -163,28 +164,34 @@ class EnhancedReportGenerationService:
             doc = SimpleDocTemplate(
                 output_path,
                 pagesize=letter,
-                rightMargin=72,
-                leftMargin=72,
-                topMargin=72,
-                bottomMargin=72
+                rightMargin=0.75*inch,
+                leftMargin=0.75*inch,
+                topMargin=0.75*inch,
+                bottomMargin=0.75*inch
             )
             
             story = []
+
+            # Pre-calculate primary concerns so it's consistent everywhere
+            violations = analysis_results.get('violations', [])
+            primary_concerns = self._get_primary_concerns(violations)
             
             # Enhanced title page
             story.extend(self._build_enhanced_title_page(analysis_results, case_info))
             story.append(PageBreak())
             
-            # Enhanced executive summary (focused on likely violations)
-            story.extend(self._build_enhanced_executive_summary(analysis_results))
+            # Enhanced executive summary
+            story.extend(self._build_enhanced_executive_summary(analysis_results, primary_concerns))
             story.append(PageBreak())
             
-            # Priority violation analysis
-            story.extend(self._build_priority_violation_analysis(analysis_results))
+            # Primary concerns and timeline
+            story.extend(self._build_primary_concerns_section(analysis_results, primary_concerns))
             story.append(PageBreak())
             
-            # Audio transcript with pertinent snippets
-            story.extend(self._build_audio_transcript_analysis(analysis_results))
+            # Detected Violations Timeline is now part of the above section
+            
+            # Key Audio Segments Analysis
+            story.extend(self._build_key_audio_segments(analysis_results))
             story.append(PageBreak())
             
             # Comprehensive frame analysis
@@ -207,8 +214,8 @@ class EnhancedReportGenerationService:
             logger.error(f"Error generating enhanced report: {str(e)}")
             raise
     
-    def _build_enhanced_executive_summary(self, analysis_results: Dict[str, Any]) -> List:
-        """Build enhanced executive summary focusing on most likely violations."""
+    def _build_enhanced_executive_summary(self, analysis_results: Dict[str, Any], primary_concerns: List[Dict[str, Any]]) -> List:
+        """Build enhanced executive summary using pre-calculated primary concerns."""
         elements = []
         
         elements.append(Paragraph("EXECUTIVE SUMMARY", self.styles['Heading1']))
@@ -382,187 +389,128 @@ class EnhancedReportGenerationService:
         
         return None
     
-    def _build_priority_violation_analysis(self, analysis_results: Dict[str, Any]) -> List:
-        """Build detailed analysis of priority violations."""
+    def _build_primary_concerns_section(self, analysis_results: Dict[str, Any], primary_concerns: List[Dict[str, Any]]) -> List:
+        """Builds the primary concerns and violation timeline section."""
         elements = []
-        
-        elements.append(Paragraph("PRIORITY VIOLATION ANALYSIS", self.styles['Heading1']))
+        elements.append(Paragraph("PRIMARY CONCERNS AND VIOLATION TIMELINE", self.styles['Heading1']))
         elements.append(Spacer(1, 12))
         
-        # Get violations from the actual data structure
-        violations_detected = analysis_results.get('violations_detected', [])
-        violation_timeline = analysis_results.get('violation_timeline', [])
-        
-        if not violation_timeline and not violations_detected:
-            elements.append(Paragraph(
-                "No violations detected in the analyzed timeframe. See comprehensive analysis for all observations.",
-                self.styles['Normal']
-            ))
-            return elements
-        
-        # Show violation timeline if available
-        if violation_timeline:
-            elements.append(Paragraph("Detected Violations Timeline:", self.styles['Heading2']))
-            elements.append(Spacer(1, 8))
+        # This re-uses the same primary concerns from the summary
+        elements.append(Paragraph("Primary Concerns Identified:", self.styles['Heading2']))
+        if primary_concerns:
+            table_data = [['#', Paragraph('Primary Concern Identified', self.styles['Normal'])]]
+            col_widths = [0.4 * inch, 6.1 * inch]
             
-            for timeline_item in violation_timeline:
-                elements.extend(self._format_timeline_violation(timeline_item))
-                elements.append(Spacer(1, 12))
-        
-        # Show general violations detected
-        if violations_detected:
-            elements.append(Paragraph("Additional Violations Detected:", self.styles['Heading2']))
-            elements.append(Spacer(1, 8))
+            for i, concern in enumerate(primary_concerns, 1):
+                concern_text = self._format_concern_for_summary(concern, i)
+                p = Paragraph(concern_text, self.styles['Normal'])
+                table_data.append([str(i), p])
             
-            for violation_type in violations_detected:
-                elements.append(Paragraph(f"• {violation_type.title()}", self.styles['HighPriorityViolation']))
-                elements.append(Spacer(1, 6))
+            concern_table = Table(table_data, colWidths=col_widths)
+            concern_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), self.colors['secondary']),
+                ('TEXTCOLOR', (0, 0), (-1, 0), white),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                ('TOPPADDING', (0, 0), (-1, 0), 10),
+                ('GRID', (0, 0), (-1, -1), 1, self.colors['border']),
+                ('BOX', (0, 0), (-1, -1), 2, self.colors['danger']),
+                ('INNERGRID', (0, 0), (-1, -1), 0.5, self.colors['border'])
+            ]))
+            elements.append(concern_table)
+        else:
+            elements.append(Paragraph("No primary concerns were identified based on the analysis.", self.styles['Normal']))
+        
+        elements.append(Spacer(1, 24))
+
+        # Full timeline is included here as well
+        elements.append(Paragraph("Full Violation Timeline:", self.styles['Heading2']))
+        elements.extend(self._build_violation_timeline(analysis_results))
         
         return elements
-    
-    def _format_timeline_violation(self, timeline_item: Dict[str, Any]) -> List:
-        """Format a timeline violation entry."""
-        elements = []
+
+    def _get_primary_concerns(self, violations: List[Dict[str, Any]], count: int = 4) -> List[Dict[str, Any]]:
+        """Selects the most severe and confident violations as primary concerns."""
+        # Sort by severity (high > medium > low) and then by confidence
+        def severity_key(v):
+            return ({'high': 0, 'medium': 1, 'low': 2}.get(v.get('severity', 'low'), 3), -v.get('confidence', 0))
         
-        # Violation header
-        timestamp = timeline_item.get('timestamp_formatted', 'Unknown')
-        violations = timeline_item.get('violations', [])
-        confidence = timeline_item.get('confidence', 0)
-        severity = timeline_item.get('severity', 'low')
-        
-        header_text = f"<b>{', '.join(violations).title()}</b> - {timestamp} (Confidence: {confidence:.1%}, Severity: {severity.upper()})"
-        elements.append(Paragraph(header_text, self.styles['Heading3']))
-        elements.append(Spacer(1, 6))
-        
-        # Description
-        description = timeline_item.get('description', 'No description available')
-        elements.append(Paragraph(description, self.styles['Normal']))
-        elements.append(Spacer(1, 6))
-        
-        return elements
-    
-    def _build_audio_transcript_analysis(self, analysis_results: Dict[str, Any]) -> List:
-        """Build audio transcript analysis with pertinent snippets highlighted and speaker identification."""
-        elements = []
-        
-        elements.append(Paragraph("AUDIO TRANSCRIPT ANALYSIS", self.styles['Heading1']))
-        elements.append(Spacer(1, 12))
-        
-        # Check for enhanced audio analysis with speaker diarization
-        audio_analysis = analysis_results.get('audio_analysis', {})
-        speaker_summary = analysis_results.get('speaker_summary', {})
-        
-        if not audio_analysis:
-            elements.append(Paragraph(
-                "No audio analysis data available in this report.",
-                self.styles['Normal']
-            ))
-            return elements
-        
-        # Audio overview
-        elements.append(Paragraph("Audio Analysis Overview:", self.styles['Heading2']))
-        
-        speech_duration = audio_analysis.get('total_speech_duration', 0)
-        total_duration = analysis_results.get('video_info', {}).get('duration', 0)
-        speech_percentage = (speech_duration / total_duration * 100) if total_duration > 0 else 0
-        
-        overview_text = f"""
-        Total Speech Duration: {speech_duration:.1f} seconds ({speech_percentage:.1f}% of video)
-        Audio Quality Score: {audio_analysis.get('audio_quality_score', 0):.2f}/1.0
-        Valid Transcription Segments: {audio_analysis.get('valid_transcription_segments', 0)}
-        Average Confidence: {audio_analysis.get('average_confidence', 0):.1%}
-        """
-        
-        elements.append(Paragraph(overview_text, self.styles['Normal']))
-        elements.append(Spacer(1, 12))
-        
-        # Speaker identification summary
-        if speaker_summary.get('has_speaker_diarization', False):
-            elements.append(Paragraph("Speaker Identification:", self.styles['Heading2']))
-            
-            total_speakers = speaker_summary.get('total_speakers_identified', 0)
-            identified_speakers = speaker_summary.get('identified_speakers', {})
-            speaker_percentages = speaker_summary.get('speaker_talk_percentage', {})
-            
-            speaker_text = f"Identified {total_speakers} distinct speakers in the recording:\n\n"
-            
-            for speaker_id, speaker_label in identified_speakers.items():
-                percentage = speaker_percentages.get(speaker_label, 0)
-                speaker_text += f"• {speaker_label}: {percentage:.1f}% of speech time\n"
-            
-            if speaker_summary.get('most_active_speaker'):
-                speaker_text += f"\nMost active speaker: {speaker_summary['most_active_speaker']}"
-            
-            elements.append(Paragraph(speaker_text, self.styles['Normal']))
-            elements.append(Spacer(1, 12))
-        
-        # Get transcription segments
-        segments = audio_analysis.get('transcription_segments', [])
-        
-        if not segments:
-            elements.append(Paragraph(
-                "No transcription segments available.",
-                self.styles['Normal']
-            ))
-            return elements
-        
-        # Show key segments with speaker identification if available
-        elements.append(Paragraph("Key Audio Segments:", self.styles['Heading2']))
-        elements.append(Spacer(1, 8))
-        
-        # Check if segments have speaker information (enhanced transcription)
-        has_speaker_info = any(
-            hasattr(seg, 'speaker_label') or (isinstance(seg, dict) and 'speaker_label' in seg)
-            for seg in segments[:5]
+        return sorted(violations, key=severity_key)[:count]
+
+    def _format_concern_for_summary(self, concern: Dict[str, Any], index: int) -> str:
+        """Formats a single concern for the executive summary table."""
+        return (
+            f"<b>{concern.get('type')} at {concern.get('timestamp_formatted', 'N/A')} "
+            f"(Confidence: {concern.get('confidence', 0):.1%})</b><br/>"
+            f"{concern.get('description', 'No description available.')}"
         )
+
+    def _get_overview_data(self, analysis_results: Dict[str, Any]) -> Dict[str, str]:
+        """Gathers data for the analysis overview table."""
+        summary = analysis_results.get('summary', {})
+        violations = analysis_results.get('violations', [])
+        frame_analyses = analysis_results.get('frame_analyses', [])
         
-        for i, segment in enumerate(segments[:10], 1):  # Show first 10 segments
-            if hasattr(segment, 'start_time'):
-                # Enhanced transcription segment
-                start_time = segment.start_time
-                end_time = segment.end_time
-                text = segment.text
-                confidence = segment.confidence
-                speaker_label = getattr(segment, 'speaker_label', 'Unknown Speaker')
-                is_hallucination = getattr(segment, 'is_hallucination', False)
-            else:
-                # Regular transcription segment (dict format)
-                start_time = segment.get('start_time', 0)
-                end_time = segment.get('end_time', 0)
-                text = segment.get('text', '')
-                confidence = segment.get('confidence', 0)
-                speaker_label = segment.get('speaker_label', 'Unknown Speaker')
-                is_hallucination = segment.get('is_hallucination', False)
+        return {
+            'Overall Severity Level': summary.get('severity_assessment', 'N/A').upper(),
+            'Average Analysis Confidence': f"{summary.get('average_confidence', 0):.1%}",
+            'Frames with Detected Concerns': f"{len([f for f in frame_analyses if f.get('concerns_detected')])}/{len(frame_analyses)}",
+            'Unique Violation Types': len(set(v['type'] for v in violations)),
+            'Primary Concerns Found': "YES" if violations else "NO"
+        }
+
+    def _build_violation_timeline(self, analysis_results: Dict[str, Any]) -> List:
+        """Builds the detected violations timeline list items."""
+        elements = []
+        
+        timeline = analysis_results.get('violation_timeline', [])
+        if not timeline:
+            elements.append(Paragraph("No specific violation events were detected in the timeline.", self.styles['Normal']))
+            return elements
             
-            # Skip hallucinations
-            if is_hallucination:
-                continue
-            
-            # Format segment with speaker identification
-            if has_speaker_info and speaker_label != 'Unknown Speaker':
-                segment_text = f"""
-                <b>[{start_time:.1f}s - {end_time:.1f}s] {speaker_label}</b><br/>
-                (Confidence: {confidence:.1%})<br/>
-                "{text}"
-                """
-            else:
-                segment_text = f"""
-                <b>[{start_time:.1f}s - {end_time:.1f}s]</b> 
-                (Confidence: {confidence:.1%})<br/>
-                "{text}"
-                """
-            
-            elements.append(Paragraph(segment_text, self.styles['TranscriptText']))
+        for item in timeline:
+            item_text = (
+                f"<b>- {item.get('timestamp_formatted', 'N/A')} (Confidence: {item.get('confidence', 0):.1%}, "
+                f"Severity: {item.get('severity', 'N/A').upper()})</b><br/>"
+                f"<i>{item.get('description', 'No details available.')}</i>"
+            )
+            elements.append(Paragraph(item_text, self.styles['Normal']))
             elements.append(Spacer(1, 8))
-        
-        if len(segments) > 10:
-            elements.append(Paragraph(
-                f"... and {len(segments) - 10} additional segments. See full transcript in appendix.",
-                self.styles['Normal']
-            ))
-        
+            
         return elements
-    
+
+    def _build_key_audio_segments(self, analysis_results: Dict[str, Any]) -> List:
+        """Builds the section for key audio segments, ensuring content can split across pages."""
+        elements = []
+        elements.append(Paragraph("Key Audio Segments:", self.styles['h1']))
+        elements.append(Spacer(1, 12))
+        
+        audio_violations = [v for v in analysis_results.get('violations', []) if v.get('source') == 'audio']
+        
+        if not audio_violations:
+            elements.append(Paragraph("No key audio segments with violations were identified.", self.styles['Normal']))
+            return elements
+        
+        for violation in audio_violations:
+            context = violation.get('audio_context', {})
+            snippet = context.get('snippet', 'No snippet available.')
+            
+            # Use simple paragraphs which are splittable, instead of a table.
+            header_text = f"<b>{violation.get('timestamp_formatted')} - {violation.get('type')} (Confidence: {violation.get('confidence', 0):.1%})</b>"
+            snippet_text = f"<i>\"{snippet}\"</i>"
+
+            p_header = Paragraph(header_text, self.styles['h4'])
+            p_snippet = Paragraph(snippet_text, self.styles['TranscriptText'])
+
+            elements.append(p_header)
+            elements.append(Spacer(1, 4))
+            elements.append(p_snippet)
+            elements.append(Spacer(1, 18))
+            
+        return elements
+
     def _build_comprehensive_frame_analysis(self, analysis_results: Dict[str, Any]) -> List:
         """Build comprehensive analysis of all frames."""
         elements = []
@@ -607,33 +555,70 @@ class EnhancedReportGenerationService:
         return elements
     
     def _format_frame_analysis(self, frame: Dict[str, Any], detailed: bool = False) -> List:
-        """Format individual frame analysis."""
-        elements = []
+        """Formats a single frame analysis, handling potential verbosity and layout issues."""
+        frame_elements = []
         
-        frame_num = frame.get('frame_number', 'N/A')
-        timestamp = frame.get('timestamp_formatted', 'N/A')
-        confidence = frame.get('confidence', 0)
+        # Frame Title
+        title_text = (
+            f"<b>Frame {frame.get('frame_number', 'N/A')} - "
+            f"{self._format_timestamp(frame.get('timestamp', 0))} "
+            f"(Confidence: {frame.get('confidence', 0):.1%})</b>"
+        )
+        frame_elements.append(Paragraph(title_text, self.styles['h4']))
+        frame_elements.append(Spacer(1, 8))
         
-        header = f"Frame {frame_num} - {timestamp} (Confidence: {confidence:.1%})"
-        elements.append(Paragraph(header, self.styles['Heading3']))
-        elements.append(Spacer(1, 4))
+        # Summarize analysis text to avoid excessive verbosity
+        analysis_text = frame.get('analysis_text', 'No analysis text available.')
+        summary_text = self._summarize_text(analysis_text, max_sentences=3)
         
-        # Analysis text
-        analysis = frame.get('analysis_text', 'No analysis available')
-        elements.append(Paragraph(analysis, self.styles['Normal']))
+        frame_elements.append(Paragraph(summary_text, self.styles['Normal']))
+        frame_elements.append(Spacer(1, 8))
         
-        if detailed:
-            # Additional details for concerning frames
-            violations = frame.get('potential_violations', [])
-            if violations:
-                elements.append(Spacer(1, 4))
-                violations_text = f"<b>Detected Issues:</b> {', '.join(violations)}"
-                elements.append(Paragraph(violations_text, self.styles['HighPriorityViolation']))
+        # Handle "Detected Issues" box to prevent overlap
+        if frame.get('concerns_detected') and frame.get('potential_violations'):
+            issues_text = "<b>Detected Issues:</b> " + ", ".join(frame.get('potential_violations'))
+            
+            # Create a Paragraph with a red border, but use a Table to contain it
+            issue_paragraph = Paragraph(issues_text, style=self.styles['Normal'])
+            issue_table = Table([[issue_paragraph]], colWidths=[6.5 * inch])
+            issue_table.setStyle(TableStyle([
+                ('BOX', (0,0), (-1,-1), 2, self.colors['danger']),
+                ('TOPPADDING', (0,0), (-1,-1), 6),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+                ('LEFTPADDING', (0,0), (-1,-1), 6),
+                ('RIGHTPADDING', (0,0), (-1,-1), 6),
+            ]))
+            
+            frame_elements.append(issue_table)
+            frame_elements.append(Spacer(1, 10))
+            
+        return [KeepTogether(frame_elements)]
+
+    def _summarize_text(self, text: str, max_sentences: int = 3) -> str:
+        """A simple text summarizer to extract key sentences."""
+        # A more sophisticated NLP model could be used here.
+        # For now, we'll extract the first few sentences and any sentence with a keyword.
+        sentences = text.split('. ')
         
-        return elements
+        # Prioritize sentences with keywords
+        keywords = ['force', 'violation', 'concern', 'escalation', 'threat', 'weapon', 'struggle']
+        key_sentences = [s for s in sentences if any(key in s.lower() for key in keywords)]
+        
+        # Combine with first sentences, ensuring no duplicates
+        result_sentences = sentences[:max_sentences]
+        for s in key_sentences:
+            if s not in result_sentences:
+                result_sentences.append(s)
+        
+        # Limit total length and join
+        summary = ". ".join(result_sentences[:max_sentences + 1])
+        if len(summary) > 500: # Hard limit
+            summary = textwrap.shorten(summary, width=500, placeholder="...")
+
+        return summary + "." if not summary.endswith('.') else summary
     
     def _build_enhanced_recommendations(self, analysis_results: Dict[str, Any]) -> List:
-        """Build enhanced recommendations based on analysis."""
+        """Build enhanced recommendations based on detected violations."""
         elements = []
         
         elements.append(Paragraph("ENHANCED RECOMMENDATIONS", self.styles['Heading1']))
@@ -672,134 +657,49 @@ class EnhancedReportGenerationService:
         return elements
     
     def _build_full_transcript_appendix(self, analysis_results: Dict[str, Any]) -> List:
-        """Build full transcript appendix with speaker identification."""
+        """Build the full audio transcript appendix, allowing content to split across pages."""
         elements = []
         
-        elements.append(Paragraph("APPENDIX: FULL AUDIO TRANSCRIPT", self.styles['Heading1']))
+        elements.append(Paragraph("APPENDIX A: FULL AUDIO TRANSCRIPT", self.styles['Heading1']))
         elements.append(Spacer(1, 12))
         
-        # Check for audio analysis
         audio_analysis = analysis_results.get('audio_analysis', {})
-        speaker_summary = analysis_results.get('speaker_summary', {})
-        
-        if not audio_analysis:
-            elements.append(Paragraph(
-                "No audio transcript available for this analysis.",
-                self.styles['Normal']
-            ))
-            return elements
-        
-        # Get transcription segments
         segments = audio_analysis.get('transcription_segments', [])
         
         if not segments:
-            elements.append(Paragraph(
-                "No transcription segments were generated for this video.",
-                self.styles['Normal']
-            ))
+            elements.append(Paragraph("No audio transcript available.", self.styles['Normal']))
             return elements
         
-        # Transcript header with speaker information
-        if speaker_summary.get('has_speaker_diarization', False):
-            elements.append(Paragraph(
-                "This transcript includes speaker identification. Speakers have been automatically "
-                "identified based on audio characteristics and speech patterns. Speaker labels "
-                "are provided as follows:",
-                self.styles['Normal']
-            ))
-            elements.append(Spacer(1, 8))
-            
-            # List identified speakers
-            identified_speakers = speaker_summary.get('identified_speakers', {})
-            if identified_speakers:
-                speaker_legend = "Speaker Legend:\n"
-                for speaker_id, speaker_label in identified_speakers.items():
-                    speaker_legend += f"• {speaker_label}\n"
-                
-                elements.append(Paragraph(speaker_legend, self.styles['Normal']))
-                elements.append(Spacer(1, 12))
-        else:
-            elements.append(Paragraph(
-                "This transcript does not include speaker identification. All speech is presented "
-                "in chronological order without speaker labels.",
-                self.styles['Normal']
-            ))
-            elements.append(Spacer(1, 12))
-        
-        # Format full transcript with speaker labels
-        elements.append(Paragraph("Complete Transcript:", self.styles['Heading2']))
-        elements.append(Spacer(1, 8))
-        
-        # Check if segments have speaker information
-        has_speaker_info = any(
-            hasattr(seg, 'speaker_label') or (isinstance(seg, dict) and 'speaker_label' in seg)
-            for seg in segments
-        )
-        
-        current_speaker = None
-        valid_segment_count = 0
-        
         for segment in segments:
-            # Extract segment information
-            if hasattr(segment, 'start_time'):
-                # Enhanced transcription segment
-                start_time = segment.start_time
-                end_time = segment.end_time
-                text = segment.text.strip()
-                confidence = segment.confidence
-                speaker_label = getattr(segment, 'speaker_label', 'Unknown Speaker')
-                is_hallucination = getattr(segment, 'is_hallucination', False)
+            # Handle both object (dataclass) and dict style access safely
+            if hasattr(segment, 'text') and hasattr(segment, 'start_time'):
+                start_time_val = segment.start_time
+                end_time_val = segment.end_time
+                text = segment.text
+            elif isinstance(segment, dict):
+                start_time_val = segment.get('start_time', 0)
+                end_time_val = segment.get('end_time', 0)
+                text = segment.get('text', '')
             else:
-                # Regular transcription segment (dict format)
-                start_time = segment.get('start_time', 0)
-                end_time = segment.get('end_time', 0)
-                text = segment.get('text', '').strip()
-                confidence = segment.get('confidence', 0)
-                speaker_label = segment.get('speaker_label', 'Unknown Speaker')
-                is_hallucination = segment.get('is_hallucination', False)
-            
-            # Skip hallucinations and empty text
-            if is_hallucination or not text:
+                logger.warning(f"Skipping unknown segment type in transcript appendix: {type(segment)}")
                 continue
+
+            start_time = self._format_timestamp(start_time_val)
+            end_time = self._format_timestamp(end_time_val)
             
-            valid_segment_count += 1
+            # Header paragraph for the segment
+            header_paragraph = Paragraph(
+                f"<b>Transcript Segment: [{start_time} - {end_time}]</b>",
+                self.styles['h3'] # Use a heading style for the segment time
+            )
+            elements.append(header_paragraph)
+            elements.append(Spacer(1, 6))
+
+            # Body paragraph, which is allowed to split across pages naturally
+            body_paragraph = Paragraph(text, self.styles['TranscriptText'])
+            elements.append(body_paragraph)
+            elements.append(Spacer(1, 18)) # Add space after each segment
             
-            # Format timestamp
-            start_min = int(start_time // 60)
-            start_sec = int(start_time % 60)
-            timestamp = f"[{start_min:02d}:{start_sec:02d}]"
-            
-            # Add speaker header if speaker changed or first valid segment
-            if has_speaker_info and speaker_label != current_speaker:
-                current_speaker = speaker_label
-                elements.append(Spacer(1, 8))
-                elements.append(Paragraph(f"**{current_speaker}:**", self.styles['Heading3']))
-            
-            # Format transcript line with timestamp and confidence if low
-            transcript_line = f"{timestamp} {text}"
-            
-            # Add confidence warning for low-confidence segments
-            if confidence < 0.4:
-                transcript_line += f" <i>(Low confidence: {confidence:.1%})</i>"
-            
-            elements.append(Paragraph(transcript_line, self.styles['TranscriptText']))
-        
-        # Summary
-        elements.append(Spacer(1, 16))
-        elements.append(Paragraph(
-            f"End of transcript. Total valid segments: {valid_segment_count}",
-            self.styles['Normal']
-        ))
-        
-        # Add note about filtered content
-        total_segments = len(segments)
-        filtered_count = total_segments - valid_segment_count
-        if filtered_count > 0:
-            elements.append(Paragraph(
-                f"Note: {filtered_count} segments were filtered out as potential hallucinations or empty content.",
-                self.styles['Normal']
-            ))
-        
         return elements
     
     def generate_enhanced_summary_report(self, analysis_results: Dict[str, Any], 
@@ -820,7 +720,7 @@ class EnhancedReportGenerationService:
             story.append(Spacer(1, 20))
             
             # Priority violations only
-            story.extend(self._build_priority_violation_analysis(analysis_results))
+            story.extend(self._build_primary_concerns(analysis_results))
             
             doc.build(story)
             
@@ -917,4 +817,10 @@ class EnhancedReportGenerationService:
         
         elements.append(Paragraph(disclaimer_text, self.styles['Normal']))
         
-        return elements 
+        return elements
+
+    def _format_timestamp(self, seconds: float) -> str:
+        """Helper function to format seconds into MM:SS."""
+        if seconds is None:
+            return "N/A"
+        return f"{int(seconds // 60):02d}:{int(seconds % 60):02d}" 
