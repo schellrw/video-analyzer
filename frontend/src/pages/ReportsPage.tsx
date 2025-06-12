@@ -90,6 +90,11 @@ const SAMPLE_REPORTS: SampleReport[] = [
 const ReportsPage = () => {
   const [selectedReport, setSelectedReport] = useState<SampleReport | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [realReports, setRealReports] = useState<any[]>([]) // In real app, this would come from API
+  
+  // Show demo reports only if there are no real reports yet
+  const showDemoReports = realReports.length === 0
+  const reportsToShow = showDemoReports ? SAMPLE_REPORTS : realReports
 
   const handleDownloadReport = (report: SampleReport) => {
     toast.info('Demo Mode', 'In a real application, this would download the full report as PDF')
@@ -255,23 +260,25 @@ const ReportsPage = () => {
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <svg className="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h3 className="text-blue-900 font-medium">Demo Reports</h3>
-            <p className="text-blue-700 text-sm">
-              These are sample reports for demonstration purposes. In the real application, reports would be generated from actual video analysis.
-            </p>
+      {showDemoReports && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <svg className="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="text-blue-900 font-medium">Demo Reports</h3>
+              <p className="text-blue-700 text-sm">
+                These are sample reports for demonstration purposes. Once you start generating real reports from your video analysis, these demo reports will be hidden automatically.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SAMPLE_REPORTS.map((report) => (
+          {reportsToShow.map((report) => (
             <div
               key={report.id}
               className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
@@ -300,7 +307,7 @@ const ReportsPage = () => {
       ) : (
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="divide-y divide-gray-200">
-            {SAMPLE_REPORTS.map((report) => (
+            {reportsToShow.map((report) => (
               <div
                 key={report.id}
                 className="p-6 hover:bg-gray-50 cursor-pointer"

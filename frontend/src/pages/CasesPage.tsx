@@ -5,6 +5,128 @@ import CaseCard from '../components/CaseCard'
 import CaseForm from '../components/CaseForm'
 import { useAuthStore } from '../stores/authStore'
 
+// List view component for cases
+interface CaseListItemProps {
+  case: CaseData
+  onView: (caseId: string) => void
+  onEdit: (caseId: string) => void
+  onDelete: (caseId: string) => void
+  isDeleting: boolean
+}
+
+const CaseListItem: React.FC<CaseListItemProps> = ({ 
+  case: caseData, 
+  onView, 
+  onEdit, 
+  onDelete, 
+  isDeleting 
+}) => {
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'bg-green-100 text-green-800'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'analyzing':
+        return 'bg-blue-100 text-blue-800'
+      case 'completed':
+        return 'bg-green-100 text-green-800'
+      case 'archived':
+        return 'bg-gray-100 text-gray-800'
+      case 'closed':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getPriorityColor = (priority: string | undefined) => {
+    if (!priority) return 'bg-gray-100 text-gray-800'
+    switch (priority.toLowerCase()) {
+      case 'urgent':
+        return 'bg-red-100 text-red-800'
+      case 'high':
+        return 'bg-orange-100 text-orange-800'
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'low':
+        return 'bg-gray-100 text-gray-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  return (
+    <div className="p-6 hover:bg-gray-50">
+      <div className="flex items-center justify-between">
+        <div className="flex-1 cursor-pointer" onClick={() => onView(caseData.id || '')}>
+          <div className="flex items-center mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 mr-4">{caseData.name || 'Untitled Case'}</h3>
+            <div className="flex items-center space-x-2">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(caseData.status)}`}>
+                {caseData.status || 'Unknown'}
+              </span>
+              {caseData.priority && (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(caseData.priority)}`}>
+                  {caseData.priority}
+                </span>
+              )}
+            </div>
+          </div>
+          <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+            {caseData.description || 'No description provided'}
+          </p>
+          <div className="text-xs text-gray-500 flex flex-wrap gap-4">
+            {caseData.case_number && <span>Case: {caseData.case_number}</span>}
+            {caseData.incident_date && (
+              <span>Incident: {new Date(caseData.incident_date).toLocaleDateString()}</span>
+            )}
+            {caseData.incident_location && <span>Location: {caseData.incident_location}</span>}
+            {caseData.created_at && (
+              <span>Created: {new Date(caseData.created_at).toLocaleDateString()}</span>
+            )}
+          </div>
+        </div>
+        <div className="ml-4 flex items-center space-x-2">
+          <button
+            onClick={() => onEdit(caseData.id || '')}
+            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+            title="Edit case"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => onDelete(caseData.id || '')}
+            disabled={isDeleting}
+            className="p-2 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+            title="Delete case"
+          >
+            {isDeleting ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            )}
+          </button>
+          <button
+            onClick={() => onView(caseData.id || '')}
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            title="View case"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const CasesPage = () => {
   const navigate = useNavigate()
   const { user, isAuthenticated } = useAuthStore()
@@ -14,6 +136,7 @@ const CasesPage = () => {
   const [editing, setEditing] = useState<CaseData | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filters, setFilters] = useState<CasesFilters>({
     page: 1,
     per_page: 12,
@@ -167,8 +290,6 @@ const CasesPage = () => {
     }))
   }
 
-
-
   if (creating) {
     return (
       <div className="space-y-6">
@@ -200,17 +321,39 @@ const CasesPage = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Cases</h1>
-                          <p className="text-gray-600">Manage your legal cases and video analysis</p>
+          <p className="text-gray-600">Manage your legal cases and video analysis</p>
         </div>
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          New Case
-        </button>
+        <div className="flex items-center space-x-3">
+          <div className="flex border border-gray-300 rounded-md">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 ${viewMode === 'grid' ? 'bg-gray-100' : ''}`}
+              title="Grid view"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 ${viewMode === 'list' ? 'bg-gray-100' : ''}`}
+              title="List view"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+          <button
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            New Case
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -359,21 +502,41 @@ const CasesPage = () => {
         </div>
       ) : (
         <>
-          {/* Cases Grid */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {cases.map((case_) => (
-              <CaseCard
-                key={case_.id}
-                case={case_}
-                onView={handleViewCase}
-                onEdit={(caseId) => {
-                  const caseToEdit = cases.find(c => c.id === caseId)
-                  if (caseToEdit) setEditing(caseToEdit)
-                }}
-                onDelete={handleDeleteCase}
-              />
-            ))}
-          </div>
+          {/* Cases Display */}
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {cases.map((case_) => (
+                <CaseCard
+                  key={case_.id}
+                  case={case_}
+                  onView={handleViewCase}
+                  onEdit={(caseId) => {
+                    const caseToEdit = cases.find(c => c.id === caseId)
+                    if (caseToEdit) setEditing(caseToEdit)
+                  }}
+                  onDelete={handleDeleteCase}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="divide-y divide-gray-200">
+                {cases.map((case_) => (
+                  <CaseListItem
+                    key={case_.id}
+                    case={case_}
+                    onView={handleViewCase}
+                    onEdit={(caseId) => {
+                      const caseToEdit = cases.find(c => c.id === caseId)
+                      if (caseToEdit) setEditing(caseToEdit)
+                    }}
+                    onDelete={handleDeleteCase}
+                    isDeleting={deleting === case_.id}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Pagination */}
           {pagination.pages > 1 && (
