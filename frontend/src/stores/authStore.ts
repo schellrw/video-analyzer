@@ -8,6 +8,7 @@ interface AuthState {
   session: Session | null
   isAuthenticated: boolean
   isLoading: boolean
+  isInitialized: boolean
   // Actions
   signIn: (email: string, password: string) => Promise<{ success: boolean; message?: string; needsEmailConfirmation?: boolean }>
   signUp: (userData: {
@@ -32,9 +33,10 @@ export const useAuthStore = create<AuthState>()(
       session: null,
       isAuthenticated: false,
       isLoading: true,
+      isInitialized: false,
 
       signIn: async (email: string, password: string) => {
-        set({ isLoading: true })
+        // Don't set loading here to prevent bounce - let the login form handle its own loading
         try {
           const result = await supabaseAuth.signIn(email, password)
           
@@ -43,9 +45,11 @@ export const useAuthStore = create<AuthState>()(
               user: result.user,
               session: result.session,
               isAuthenticated: true,
-              isLoading: false
+              isLoading: false,
+              isInitialized: true
             })
           } else {
+            // Only set loading false if auth failed, don't change auth state
             set({ isLoading: false })
           }
           
@@ -64,7 +68,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signUp: async (userData) => {
-        set({ isLoading: true })
+        // Don't set loading here to prevent bounce - let the signup form handle its own loading
         try {
           const result = await supabaseAuth.signUp(userData)
           
@@ -73,7 +77,8 @@ export const useAuthStore = create<AuthState>()(
               user: result.user,
               session: result.session,
               isAuthenticated: true,
-              isLoading: false
+              isLoading: false,
+              isInitialized: true
             })
           } else {
             set({ isLoading: false })
@@ -101,7 +106,8 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             session: null,
             isAuthenticated: false,
-            isLoading: false
+            isLoading: false,
+            isInitialized: true
           })
         } catch (error) {
           console.error('Sign out error:', error)
@@ -114,7 +120,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       initializeAuth: async () => {
-        set({ isLoading: true })
+        // Only show loading during initial app load
+        if (!get().isInitialized) {
+          set({ isLoading: true })
+        }
+        
         try {
           // Get current session
           const { user, session } = await supabaseAuth.getCurrentSession()
@@ -123,7 +133,8 @@ export const useAuthStore = create<AuthState>()(
             user,
             session,
             isAuthenticated: !!user,
-            isLoading: false
+            isLoading: false,
+            isInitialized: true
           })
 
           // Listen for auth state changes
@@ -132,7 +143,8 @@ export const useAuthStore = create<AuthState>()(
               user,
               session,
               isAuthenticated: !!user,
-              isLoading: false
+              isLoading: false,
+              isInitialized: true
             })
           })
         } catch (error) {
@@ -141,7 +153,8 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             session: null,
             isAuthenticated: false,
-            isLoading: false
+            isLoading: false,
+            isInitialized: true
           })
         }
       },
@@ -150,7 +163,8 @@ export const useAuthStore = create<AuthState>()(
         set({
           user,
           session,
-          isAuthenticated: !!user
+          isAuthenticated: !!user,
+          isInitialized: true
         })
       },
 
@@ -160,7 +174,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      // Only persist user data, not session (Supabase handles session persistence)
+      // Only persist user data, not session or loading states
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { toast } from '@/stores/toastStore'
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true)
@@ -47,16 +48,29 @@ const LoginPage = () => {
 
       if (result.success) {
         if (result.needsEmailConfirmation) {
+          toast.info('Email Confirmation Required', 'Please check your email and click the confirmation link.')
           // Redirect to email confirmation page
           navigate(`/confirm-email?email=${encodeURIComponent(formData.email)}`)
         } else {
+          toast.success(
+            `Welcome back, ${formData.email.split('@')[0]}!`, 
+            isLogin ? 'Successfully signed in.' : 'Account created and signed in successfully.'
+          )
           // User is logged in, redirect to dashboard
           navigate('/')
         }
       } else {
+        toast.error(
+          isLogin ? 'Sign In Failed' : 'Sign Up Failed', 
+          result.message || 'An error occurred'
+        )
         setError(result.message || 'An error occurred')
       }
     } catch (err: any) {
+      toast.error(
+        isLogin ? 'Sign In Error' : 'Sign Up Error', 
+        err.message || 'An unexpected error occurred'
+      )
       setError(err.message || 'An error occurred')
     } finally {
       setLoading(false)

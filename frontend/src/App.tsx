@@ -11,16 +11,17 @@ import VideoAnalysisPage from '@/pages/VideoAnalysisPage'
 import ReportsPage from '@/pages/ReportsPage'
 import SettingsPage from '@/pages/SettingsPage'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import ToastContainer from '@/components/ToastContainer'
 
 function App() {
-  const { isAuthenticated, isLoading, initializeAuth } = useAuthStore()
+  const { isAuthenticated, isLoading, isInitialized, initializeAuth } = useAuthStore()
 
   useEffect(() => {
     initializeAuth()
   }, [initializeAuth])
 
-  // Show loading spinner while initializing auth
-  if (isLoading) {
+  // Show loading spinner only during initial app startup
+  if (!isInitialized && isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -32,27 +33,30 @@ function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/confirm-email" element={<EmailConfirmationPage />} />
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<DashboardPage />} />
-                <Route path="/cases" element={<CasesPage />} />
-                <Route path="/cases/:id" element={<CaseDetailPage />} />
-                <Route path="/videos/:id/analysis" element={<VideoAnalysisPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Routes>
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/confirm-email" element={<EmailConfirmationPage />} />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/cases" element={<CasesPage />} />
+                  <Route path="/cases/:id" element={<CaseDetailPage />} />
+                  <Route path="/videos/:id/analysis" element={<VideoAnalysisPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Routes>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+      <ToastContainer />
+    </>
   )
 }
 
