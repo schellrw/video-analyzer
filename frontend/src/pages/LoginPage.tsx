@@ -53,7 +53,7 @@ const LoginPage = () => {
           navigate(`/confirm-email?email=${encodeURIComponent(formData.email)}`)
         } else {
           toast.success(
-            `Welcome back, ${formData.email.split('@')[0]}!`, 
+            `Welcome back, ${result.user?.firstName || 'User'}!`, 
             isLogin ? 'Successfully signed in.' : 'Account created and signed in successfully.'
           )
           // User is logged in, redirect to dashboard

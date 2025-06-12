@@ -216,10 +216,10 @@ class SupabaseAuthService {
         body: JSON.stringify({
           supabase_user_id: user.id,
           email: user.email,
-          first_name: user.user_metadata.first_name,
-          last_name: user.user_metadata.last_name,
-          organization: user.user_metadata.organization,
-          role: user.user_metadata.role
+          first_name: user.user_metadata.first_name || user.email?.split('@')[0] || 'User',
+          last_name: user.user_metadata.last_name || '',
+          organization: user.user_metadata.organization || '',
+          role: user.user_metadata.role || 'attorney'
         })
       })
 
@@ -243,7 +243,7 @@ class SupabaseAuthService {
     return {
       id: user.id,
       email: user.email!,
-      firstName: user.user_metadata.first_name || '',
+      firstName: user.user_metadata.first_name || user.email?.split('@')[0] || 'User',
       lastName: user.user_metadata.last_name || '',
       organization: user.user_metadata.organization || '',
       role: user.user_metadata.role || 'attorney',
@@ -274,9 +274,36 @@ class SupabaseAuthService {
           emailConfirmed: !!user.email_confirmed_at
         }
       } else if (response.status === 404) {
-        // Profile doesn't exist, create it
+        // Profile doesn't exist, create it using user metadata
         console.log('Profile not found, creating new profile...')
-        return await this.createUserProfile(user, session)
+        const createResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/profile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            supabase_user_id: user.id,
+            email: user.email,
+            first_name: user.user_metadata.first_name || user.email?.split('@')[0] || 'User',
+            last_name: user.user_metadata.last_name || '',
+            organization: user.user_metadata.organization || '',
+            role: user.user_metadata.role || 'attorney'
+          })
+        })
+
+        if (createResponse.ok) {
+          const data = await createResponse.json()
+          return {
+            id: user.id,
+            email: user.email!,
+            firstName: data.data.first_name,
+            lastName: data.data.last_name,
+            organization: data.data.organization,
+            role: data.data.role,
+            emailConfirmed: !!user.email_confirmed_at
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching user profile:', error)
@@ -286,7 +313,7 @@ class SupabaseAuthService {
     return {
       id: user.id,
       email: user.email!,
-      firstName: user.user_metadata.first_name || '',
+      firstName: user.user_metadata.first_name || user.email?.split('@')[0] || 'User',
       lastName: user.user_metadata.last_name || '',
       organization: user.user_metadata.organization || '',
       role: user.user_metadata.role || 'attorney',

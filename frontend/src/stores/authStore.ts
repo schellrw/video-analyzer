@@ -10,7 +10,7 @@ interface AuthState {
   isLoading: boolean
   isInitialized: boolean
   // Actions
-  signIn: (email: string, password: string) => Promise<{ success: boolean; message?: string; needsEmailConfirmation?: boolean }>
+  signIn: (email: string, password: string) => Promise<{ success: boolean; message?: string; needsEmailConfirmation?: boolean; user: AuthUser | null; session: Session | null }>
   signUp: (userData: {
     email: string
     password: string
@@ -18,7 +18,7 @@ interface AuthState {
     lastName: string
     organization?: string
     role?: string
-  }) => Promise<{ success: boolean; message?: string; needsEmailConfirmation?: boolean }>
+  }) => Promise<{ success: boolean; message?: string; needsEmailConfirmation?: boolean; user: AuthUser | null; session: Session | null }>
   signOut: () => Promise<void>
   resendConfirmation: (email: string) => Promise<{ success: boolean; message: string }>
   initializeAuth: () => Promise<void>
@@ -56,13 +56,17 @@ export const useAuthStore = create<AuthState>()(
           return {
             success: result.success,
             message: result.message,
-            needsEmailConfirmation: result.needsEmailConfirmation
+            needsEmailConfirmation: result.needsEmailConfirmation,
+            user: result.user ?? null,
+            session: result.session ?? null
           }
         } catch (error: any) {
           set({ isLoading: false })
           return {
             success: false,
-            message: error.message || 'Sign in failed'
+            message: error.message || 'Sign in failed',
+            user: null,
+            session: null
           }
         }
       },
@@ -87,13 +91,17 @@ export const useAuthStore = create<AuthState>()(
           return {
             success: result.success,
             message: result.message,
-            needsEmailConfirmation: result.needsEmailConfirmation
+            needsEmailConfirmation: result.needsEmailConfirmation,
+            user: result.user ?? null,
+            session: result.session ?? null
           }
         } catch (error: any) {
           set({ isLoading: false })
           return {
             success: false,
-            message: error.message || 'Registration failed'
+            message: error.message || 'Registration failed',
+            user: null,
+            session: null
           }
         }
       },
