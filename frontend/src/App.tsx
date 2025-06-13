@@ -7,6 +7,7 @@ import EmailConfirmationPage from '@/pages/EmailConfirmationPage'
 import DashboardPage from '@/pages/DashboardPage'
 import CasesPage from '@/pages/CasesPage'
 import CaseDetailPage from '@/pages/CaseDetailPage'
+import CaseEditPage from '@/pages/CaseEditPage'
 import VideoAnalysisPage from '@/pages/VideoAnalysisPage'
 import ReportsPage from '@/pages/ReportsPage'
 import SettingsPage from '@/pages/SettingsPage'
@@ -46,6 +47,8 @@ function App() {
                   <Route path="/" element={<DashboardPage />} />
                   <Route path="/cases" element={<CasesPage />} />
                   <Route path="/cases/:id" element={<CaseDetailPage />} />
+                  <Route path="/cases/:id/edit" element={<CaseEditPage />} />
+                  <Route path="/analysis" element={<VideoAnalysisPage />} />
                   <Route path="/videos/:id/analysis" element={<VideoAnalysisPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />

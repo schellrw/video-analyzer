@@ -83,6 +83,59 @@ export interface CasesFilters {
   search?: string
 }
 
+// Types for Video Management
+export interface VideoData {
+  id: string
+  case_id: string
+  filename: string
+  file_size: number
+  duration: number
+  type: 'bodycam' | 'cctv' | 'dashcam' | 'mobile' | 'other'
+  status: 'uploading' | 'processing' | 'analyzed' | 'failed'
+  upload_date: string
+  analysis_progress?: {
+    total: number
+    completed: number
+    percentage: number
+  }
+  metadata?: {
+    resolution: string
+    fps: number
+    codec: string
+    source: string
+    location?: string
+    timestamp?: string
+  }
+  analysis_results?: {
+    key_frames: number
+    detected_objects: number
+    detected_people: number
+    detected_actions: number
+    audio_transcript?: string
+    violations?: {
+      type: string
+      confidence: number
+      timestamp: string
+      description: string
+    }[]
+  }
+}
+
+export interface VideosResponse {
+  success: boolean
+  data: {
+    videos: VideoData[]
+    pagination: {
+      page: number
+      per_page: number
+      total: number
+      pages: number
+      has_next: boolean
+      has_prev: boolean
+    }
+  }
+}
+
 // Cases API endpoints
 export const casesAPI = {
   // Get all cases with filtering and pagination
@@ -137,6 +190,58 @@ export const healthAPI = {
     const response = await api.get('/health')
     return response.data
   },
+}
+
+// Video API endpoints
+export const videosAPI = {
+  // Get all videos for a case
+  getCaseVideos: async (caseId: string, filters: { page?: number; per_page?: number } = {}): Promise<VideosResponse> => {
+    const params = new URLSearchParams()
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        params.append(key, value.toString())
+      }
+    })
+    const response = await api.get(`/cases/${caseId}/videos?${params.toString()}`)
+    return response.data
+  },
+
+  // Get all videos across all cases
+  getAllVideos: async (filters: { page?: number; per_page?: number; case_id?: string } = {}): Promise<VideosResponse> => {
+    const params = new URLSearchParams()
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        params.append(key, value.toString())
+      }
+    })
+    const response = await api.get(`/videos?${params.toString()}`)
+    return response.data
+  },
+
+  // Get a single video by ID
+  getVideo: async (videoId: string): Promise<{ success: boolean; data: VideoData }> => {
+    const response = await api.get(`/videos/${videoId}`)
+    return response.data
+  },
+
+  // Upload a new video to a case
+  uploadVideo: async (caseId: string, file: File, metadata: Partial<VideoData['metadata']> = {}): Promise<{ success: boolean; data: VideoData; message: string }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('metadata', JSON.stringify(metadata))
+    const response = await api.post(`/cases/${caseId}/videos`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  },
+
+  // Delete a video
+  deleteVideo: async (videoId: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/videos/${videoId}`)
+    return response.data
+  }
 }
 
 export default api 

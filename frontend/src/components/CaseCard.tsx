@@ -146,16 +146,8 @@ const CaseCard: React.FC<CaseCardProps> = ({ case: caseItem, onView, onEdit, onD
               onClick={() => onView(caseItem.id!)}
               className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              View
+              Details
             </button>
-            {onEdit && (
-              <button
-                onClick={() => onEdit(caseItem.id!)}
-                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Edit
-              </button>
-            )}
             {onDelete && (
               <button
                 onClick={() => onDelete(caseItem.id!)}

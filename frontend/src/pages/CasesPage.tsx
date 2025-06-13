@@ -9,7 +9,6 @@ import { useAuthStore } from '../stores/authStore'
 interface CaseListItemProps {
   case: CaseData
   onView: (caseId: string) => void
-  onEdit: (caseId: string) => void
   onDelete: (caseId: string) => void
   isDeleting: boolean
 }
@@ -17,7 +16,6 @@ interface CaseListItemProps {
 const CaseListItem: React.FC<CaseListItemProps> = ({ 
   case: caseData, 
   onView, 
-  onEdit, 
   onDelete, 
   isDeleting 
 }) => {
@@ -90,16 +88,10 @@ const CaseListItem: React.FC<CaseListItemProps> = ({
         </div>
         <div className="ml-4 flex items-center space-x-2">
           <button
-            onClick={() => onEdit(caseData.id || '')}
-            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-            title="Edit case"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-          <button
-            onClick={() => onDelete(caseData.id || '')}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(caseData.id || '')
+            }}
             disabled={isDeleting}
             className="p-2 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
             title="Delete case"
@@ -113,7 +105,10 @@ const CaseListItem: React.FC<CaseListItemProps> = ({
             )}
           </button>
           <button
-            onClick={() => onView(caseData.id || '')}
+            onClick={(e) => {
+              e.stopPropagation()
+              onView(caseData.id || '')
+            }}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
             title="View case"
           >
@@ -510,10 +505,6 @@ const CasesPage = () => {
                   key={case_.id}
                   case={case_}
                   onView={handleViewCase}
-                  onEdit={(caseId) => {
-                    const caseToEdit = cases.find(c => c.id === caseId)
-                    if (caseToEdit) setEditing(caseToEdit)
-                  }}
                   onDelete={handleDeleteCase}
                 />
               ))}
@@ -526,10 +517,6 @@ const CasesPage = () => {
                     key={case_.id}
                     case={case_}
                     onView={handleViewCase}
-                    onEdit={(caseId) => {
-                      const caseToEdit = cases.find(c => c.id === caseId)
-                      if (caseToEdit) setEditing(caseToEdit)
-                    }}
                     onDelete={handleDeleteCase}
                     isDeleting={deleting === case_.id}
                   />

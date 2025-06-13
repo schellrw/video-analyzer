@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { toast } from '@/stores/toastStore'
+import { useNavigate } from 'react-router-dom'
 
 interface SampleReport {
   id: string
@@ -91,6 +92,7 @@ const ReportsPage = () => {
   const [selectedReport, setSelectedReport] = useState<SampleReport | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [realReports, setRealReports] = useState<any[]>([]) // In real app, this would come from API
+  const navigate = useNavigate()
   
   // Show demo reports only if there are no real reports yet
   const showDemoReports = realReports.length === 0
@@ -178,7 +180,12 @@ const ReportsPage = () => {
               </span>
             </div>
             <div className="flex items-center text-gray-600 space-x-4">
-              <span>Case: {selectedReport.caseNumber}</span>
+              <span>Case: <button 
+                onClick={() => navigate(`/cases/${selectedReport.caseNumber}`)}
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                {selectedReport.caseNumber}
+              </button></span>
               <span>Generated: {new Date(selectedReport.dateGenerated).toLocaleDateString()}</span>
             </div>
           </div>
@@ -297,7 +304,15 @@ const ReportsPage = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{report.title}</h3>
                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">{report.preview}</p>
                 <div className="text-xs text-gray-500">
-                  <p>Case: {report.caseNumber}</p>
+                  <p>Case: <button 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate(`/cases/${report.caseNumber}`)
+                    }}
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {report.caseNumber}
+                  </button></p>
                   <p>Generated: {new Date(report.dateGenerated).toLocaleDateString()}</p>
                 </div>
               </div>
@@ -327,7 +342,15 @@ const ReportsPage = () => {
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">{report.title}</h3>
                     <p className="text-gray-600 text-sm mb-2 line-clamp-2">{report.preview}</p>
                     <div className="text-xs text-gray-500 flex space-x-4">
-                      <span>Case: {report.caseNumber}</span>
+                      <span>Case: <button 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/cases/${report.caseNumber}`)
+                        }}
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        {report.caseNumber}
+                      </button></span>
                       <span>Generated: {new Date(report.dateGenerated).toLocaleDateString()}</span>
                     </div>
                   </div>
