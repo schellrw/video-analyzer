@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores/authStore'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { casesAPI } from '@/services/api'
 import QuickVideoUpload from '@/components/QuickVideoUpload'
@@ -8,6 +8,7 @@ import { toast } from '@/stores/toastStore'
 const DashboardPage = () => {
   const { user, signOut } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [stats, setStats] = useState({
     totalCases: 0,
@@ -15,6 +16,25 @@ const DashboardPage = () => {
     loading: true,
     error: null as string | null
   })
+
+  // Reset onboarding when navigating to dashboard
+  useEffect(() => {
+    if (location.pathname === '/') {
+      const urlParams = new URLSearchParams(location.search)
+      const shouldUpload = urlParams.get('upload') === 'true'
+      
+      if (shouldUpload) {
+        setShowOnboarding(true)
+      } else {
+        // Only show onboarding for truly new users (no cases)
+        if (stats.totalCases === 0 && !stats.loading) {
+          setShowOnboarding(true)
+        } else {
+          setShowOnboarding(false)
+        }
+      }
+    }
+  }, [location.pathname, location.search, stats.totalCases, stats.loading])
 
   const handleLogout = async () => {
     await signOut()
@@ -26,6 +46,10 @@ const DashboardPage = () => {
     toast.success('Upload successful!', `Case "${caseName}" has been created and analysis has started.`)
     // Refresh stats to show the newly created case
     fetchStats()
+    // Clear the upload parameter from URL
+    if (location.search.includes('upload=true')) {
+      navigate('/', { replace: true })
+    }
   }
 
   // Fetch dashboard statistics

@@ -16,8 +16,8 @@ const QuickVideoUpload: React.FC<QuickVideoUploadProps> = ({ onUploadSuccess, on
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      if (file.size > 500 * 1024 * 1024) { // 500MB limit
-        toast.error('File too large', 'Please select a video file smaller than 500MB')
+      if (file.size > 2048 * 1024 * 1024) { // 2GB limit
+        toast.error('File too large', 'Please select a video file smaller than 2GB')
         return
       }
       
@@ -127,10 +127,11 @@ const QuickVideoUpload: React.FC<QuickVideoUploadProps> = ({ onUploadSuccess, on
               Drop your video here
             </h3>
             <p className="text-gray-500 mb-4">
-              or click to browse files
+              Upload your video evidence for AI-powered analysis. Our system will automatically detect 
+              key events, transcribe audio, and identify potential violations.
             </p>
-            <p className="text-sm text-gray-400">
-              Supports MP4, MOV, AVI files up to 500MB
+            <p className="text-sm text-gray-400 mb-6">
+              Supports MP4, MOV, AVI files up to 2GB
             </p>
             <input
               ref={fileInputRef}

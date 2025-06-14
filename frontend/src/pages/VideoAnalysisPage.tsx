@@ -113,6 +113,12 @@ const VideoAnalysisPage = () => {
                 </option>
               ))}
             </select>
+            <button
+              onClick={() => navigate('/?upload=true')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Upload Video
+            </button>
           </div>
         </div>
 

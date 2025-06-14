@@ -102,7 +102,7 @@ const DEFAULT_SETTINGS: Settings = {
     saveIntermediateResults: true
   },
   storagePreferences: {
-    maxVideoSize: 500, // MB
+    maxVideoSize: 2048, // MB (2GB)
     retentionPeriod: 365, // days
     compressionEnabled: true,
     compressionQuality: 80 // percentage
@@ -365,7 +365,7 @@ const SettingsPage = () => {
                   <input
                     type="number"
                     min="100"
-                    max="2000"
+                    max="5000"
                     value={settings.storagePreferences.maxVideoSize}
                     onChange={(e) => handleStoragePreferenceChange('maxVideoSize', parseInt(e.target.value))}
                     className="w-full px-3 py-2 border rounded-md"
