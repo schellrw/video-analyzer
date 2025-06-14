@@ -42,14 +42,10 @@ const DashboardPage = () => {
   }
 
   const handleUploadSuccess = (videoId: string, caseName: string) => {
-    setShowOnboarding(false)
     toast.success('Upload successful!', `Case "${caseName}" has been created and analysis has started.`)
-    // Refresh stats to show the newly created case
+    // Navigate to clean dashboard and refresh stats
+    navigate('/', { replace: true })
     fetchStats()
-    // Clear the upload parameter from URL
-    if (location.search.includes('upload=true')) {
-      navigate('/', { replace: true })
-    }
   }
 
   // Fetch dashboard statistics
@@ -160,12 +156,12 @@ const DashboardPage = () => {
           
           <QuickVideoUpload 
             onUploadSuccess={handleUploadSuccess}
-            onCancel={() => setShowOnboarding(false)}
+            onCancel={() => navigate('/', { replace: true })}
           />
           
           <div className="mt-12 text-center">
             <button
-              onClick={() => setShowOnboarding(false)}
+              onClick={() => navigate('/', { replace: true })}
               className="text-gray-500 hover:text-gray-700 text-sm"
             >
               Skip for now and explore the dashboard
@@ -189,7 +185,7 @@ const DashboardPage = () => {
             </div>
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => setShowOnboarding(true)}
+                onClick={() => navigate('/?upload=true')}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 Upload Video
@@ -246,7 +242,7 @@ const DashboardPage = () => {
               </div>
             </div>
             
-            <div className="bg-green-50 p-6 rounded-lg cursor-pointer hover:bg-green-100 transition-colors" onClick={() => setShowOnboarding(true)}>
+            <div className="bg-green-50 p-6 rounded-lg cursor-pointer hover:bg-green-100 transition-colors" onClick={() => navigate('/?upload=true')}>
               <h3 className="text-lg font-medium text-green-900">Upload Video</h3>
               <p className="text-green-700 mt-2">Quick video analysis</p>
               <div className="mt-4">
@@ -291,7 +287,7 @@ const DashboardPage = () => {
               </p>
               <div className="mt-3">
                 <button
-                  onClick={() => setShowOnboarding(true)}
+                  onClick={() => navigate('/?upload=true')}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium"
                 >
                   Upload Your First Video
