@@ -406,4 +406,50 @@ def get_case_stats():
         return jsonify({
             'success': False,
             'message': f'Error retrieving case statistics: {str(e)}'
+        }), 500
+
+@cases_bp.route('/<case_id>/videos', methods=['GET'])
+@supabase_jwt_required
+def get_case_videos(case_id):
+    """Get all videos for a specific case."""
+    try:
+        current_user_id = get_current_user_id()
+        
+        # Verify case ownership
+        case = Case.query.filter_by(
+            id=case_id,
+            created_by=current_user_id
+        ).first()
+        
+        if not case:
+            return jsonify({
+                'success': False,
+                'message': 'Case not found'
+            }), 404
+        
+        # Get query parameters for pagination
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 10, type=int), 100)
+        
+        # For now, return empty response since Video model integration is not complete
+        # TODO: Once Video model is properly integrated, implement actual video fetching
+        return jsonify({
+            'success': True,
+            'data': {
+                'videos': [],
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': 0,
+                    'pages': 0,
+                    'has_next': False,
+                    'has_prev': False
+                }
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error retrieving case videos: {str(e)}'
         }), 500 
